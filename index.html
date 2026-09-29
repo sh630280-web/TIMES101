@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>نظام الحضور والانصراف</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f3f6fa;--card:#fff;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--orange:#d97706}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+button,input,select{font:inherit}
+header{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:16px;position:sticky;top:0;z-index:10}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-size:18px;font-weight:800}.sub{font-size:11px;opacity:.7;margin-top:4px}.clock{font-size:13px;font-weight:800;background:#ffffff15;border:1px solid #ffffff22;padding:8px 10px;border-radius:12px}
+main{max-width:980px;margin:auto;padding:14px 14px 85px}
+.page{display:none}.page.active{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:0 8px 28px #0f172a08}
+.title-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.title-row h2{font-size:17px;margin:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+label{font-size:12px;font-weight:700;display:block;margin:0 0 6px}
+input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:0}
+input:focus,select:focus{border-color:#93c5fd;box-shadow:0 0 0 3px #2563eb12}
+.btn{border:0;border-radius:12px;padding:11px 13px;font-weight:800;cursor:pointer}.btn:active{transform:translateY(1px)}.btn-primary{background:#0f172a;color:#fff}.btn-blue{background:var(--blue);color:#fff}.btn-green{background:var(--green);color:#fff}.btn-red{background:var(--red);color:#fff}.btn-ghost{background:#f8fafc;color:var(--ink);border:1px solid var(--line)}.btn-sm{padding:8px 10px;font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.center{justify-content:center}
+.hero{text-align:center;padding:22px 14px}.hero h1{font-size:22px;margin:0 0 8px}.hero p{font-size:12px;line-height:1.8;color:var(--muted);max-width:700px;margin:0 auto 14px}
+.photo{width:170px;height:170px;margin:14px auto;border:2px dashed #94a3b8;background:#f8fafc;border-radius:20px;display:grid;place-items:center;overflow:hidden}.photo img{width:100%;height:100%;object-fit:cover;display:none}.placeholder{font-size:12px;color:var(--muted);line-height:1.8}
+.notice{padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.8;margin-top:10px}.info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}.warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}.danger{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.status{font-size:12px;color:var(--muted);min-height:20px;margin-top:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}.stat span{font-size:11px;color:var(--muted)}.stat b{display:block;font-size:22px;margin-top:5px}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}th{background:#f8fafc}.badge{display:inline-block;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}.badge-in{background:#dcfce7;color:#166534}.badge-out{background:#fee2e2;color:#991b1b}.badge-late{background:#fef3c7;color:#92400e}.badge-ok{background:#dbeafe;color:#1e40af}
+.thumb{width:44px;height:44px;object-fit:cover;border-radius:9px;border:1px solid var(--line);cursor:pointer}.empty{text-align:center;color:var(--muted);padding:25px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 6px max(7px,env(safe-area-inset-bottom));box-shadow:0 -4px 18px #0000000a}
+nav button{background:none;border:0;padding:5px;color:#64748b;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px}nav button.active{color:#0f172a;font-weight:900}.navicon{font-size:18px}
+.modal{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:14px;z-index:50}.modal.show{display:flex}.modal-card{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;color:#0f172a;border-radius:18px;padding:16px}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font-size:16px}
+.small{font-size:11px;color:var(--muted);line-height:1.8}
+.toast{position:fixed;z-index:60;top:75px;left:15px;right:15px;max-width:480px;margin:auto;background:#0f172a;color:#fff;padding:11px 13px;border-radius:12px;text-align:center;font-size:12px;display:none}
+.print-only{display:none}
+@media(max-width:720px){.row,.row3{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}}
+@media print{
+header,nav,.no-print,.modal,.toast{display:none!important}
+body{background:#fff}.app,main{padding:0;max-width:none}.card{box-shadow:none;border:0}
+.screen-report{display:none!important}.print-only{display:block!important;page-break-after:always}
+.print-only:last-child{page-break-after:auto}.print-only h2{text-align:center;margin:0 0 5px}.print-meta{text-align:center;font-size:11px;color:#555;margin-bottom:14px}
+.print-only table{font-size:11px}.print-only th,.print-only td{padding:7px}
+}
+
+/* hide recent attendance operations from attendance screen only */
+#recentLogs{display:none!important}
+
+/* شاشة تسجيل الحضور: بيانات الموظف والتسجيل فقط */
+#home > .grid4{display:none!important}
+#home .recent-ops-card{display:none!important}
+
+.dept-print-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.dept-print-grid .btn{width:100%}
+.dept-print-only{display:none}
+@media print{
+  .dept-print-only{display:none!important}
+  body.print-dept-mode .print-only:not(.dept-print-only){display:none!important}
+  body.print-dept-mode .dept-print-only{display:block!important}
+}
+
+#reports.admin-locked{display:none!important}
+""</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<header><div class="head"><div><div id="companyTitle" class="brand">نظام الحضور والانصراف</div><div class="sub">نظام محلي — البيانات محفوظة على هذا الجهاز</div></div><div id="clock" class="clock">--:--:--</div></div></header>
+
+<main>
+<section id="home" class="page active">
+<div class="card hero">
+<h1>تسجيل الحضور والانصراف</h1>
+<p>لا يتم تسجيل أي عملية إلا بعد إدخال الرقم الوظيفي والتعرف على الموظف والتقاط صورة حديثة.</p>
+<div class="row" style="text-align:right">
+<div><label>الرقم الوظيفي</label><input id="attCode" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="اكتب الرقم الوظيفي"></div>
+<div><label>اسم الموظف</label><input id="attEmployeeName" readonly placeholder="سيظهر الاسم تلقائيًا"></div>
+</div>
+<div class="row" style="text-align:right;margin-top:10px">
+<div><label>نوع العملية</label><select id="attType"><option value="in">حضور</option><option value="out">انصراف</option></select></div>
+<div><label>ملاحظة (اختياري)</label><input id="attNote" maxlength="120" placeholder="ملاحظة"></div>
+</div>
+<div class="photo"><img id="photoPreview" alt="الصورة"><div id="photoPlaceholder" class="placeholder">📷<br>التقاط الصورة إلزامي<br>لكل عملية</div></div>
+<input id="cameraInput" type="file" accept="image/*" capture="user" style="display:none">
+<div class="actions center"><button class="btn btn-blue" id="photoBtn">📷 التقاط صورة</button><button class="btn btn-green" id="saveBtn" disabled>✅ تسجيل العملية</button></div>
+<div id="attStatus" class="status"></div>
+<div class="notice info">الصورة تُرفع إلى التخزين الخاص وتُربط بعملية الحضور والانصراف، ويمكن للمسؤول مراجعتها لاحقًا.</div>
+</div>
+</section>
+
+<section id="employees" class="page">
+<div class="card">
+<div class="title-row"><h2>إضافة موظف</h2></div>
+<div class="row"><div><label>اسم الموظف</label><input id="empName" maxlength="80"></div><div><label>رقم الموظف</label><input id="empCode" maxlength="20"></div></div>
+<div class="row" style="margin-top:10px"><div><label>القسم</label><input id="empDept" maxlength="60"></div><div><label>بداية الدوام</label><input id="empStart" type="time" value="08:00"></div></div>
+<div class="row" style="margin-top:10px"><div><label>نهاية الدوام</label><input id="empEnd" type="time" value="17:00"></div><div><label>الرمز السري</label><input id="empPin" type="password" inputmode="numeric" minlength="4" maxlength="8"></div></div>
+<div class="row" style="margin-top:10px"><div><label>تأكيد الرمز</label><input id="empPin2" type="password" inputmode="numeric" minlength="4" maxlength="8"></div><div></div></div>
+<div class="notice warn">الرمز السري يُحفظ كقيمة مجزأة وليس كنص ظاهر. تغييرات الموظفين محمية بكلمة مرور المسؤول.</div>
+<div class="actions" style="margin-top:10px"><button class="btn btn-blue" id="addEmployee">إضافة الموظف</button></div>
+</div>
+<div class="card"><div class="title-row"><h2>الموظفون</h2><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><select id="empDeptFilter" style="max-width:190px"><option value="">كل الأقسام</option></select><input id="empSearch" placeholder="بحث..." style="max-width:220px"></div></div>
+<div class="table-wrap"><table><thead><tr><th>الرقم</th><th>الموظف</th><th>القسم</th><th>بداية</th><th>نهاية</th><th>إجراءات</th></tr></thead><tbody id="employeesBody"></tbody></table></div></div>
+</section>
+
+<section id="logs" class="page">
+<div class="card">
+<div class="title-row"><h2>سجل الحضور والانصراف</h2><div class="actions no-print"><button class="btn btn-primary btn-sm" id="printBtn">🖨️ طباعة</button><button class="btn btn-ghost btn-sm" id="backupBtn">💾 نسخة احتياطية</button></div></div>
+<div class="row3 no-print"><div><label>من</label><input id="fromDate" type="date"></div><div><label>إلى</label><input id="toDate" type="date"></div><div><label>الموظف</label><select id="logEmployee"><option value="">الكل</option></select></div></div>
+<div class="row no-print" style="margin-top:10px"><div><label>العملية</label><select id="logType"><option value="">الكل</option><option value="in">الحضور</option><option value="out">الانصراف</option></select></div><div><label>الحالة</label><select id="logStatus"><option value="">الكل</option><option value="late">متأخر</option><option value="early">انصراف مبكر</option><option value="normal">طبيعي</option></select></div></div>
+</div>
+<div class="card screen-report"><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الصورة</th><th>الموظف</th><th>القسم</th><th>العملية</th><th>الحالة</th><th>عرض</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
+
+<div class="print-only"><h2 id="printCompanyIn">تقرير الحضور</h2><div id="printMetaIn" class="print-meta"></div><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الموظف</th><th>القسم</th><th>بداية الدوام</th><th>الحالة</th></tr></thead><tbody id="printInBody"></tbody></table></div>
+<div class="print-only"><h2 id="printCompanyOut">تقرير الانصراف</h2><div id="printMetaOut" class="print-meta"></div><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الموظف</th><th>القسم</th><th>نهاية الدوام</th><th>الحالة</th></tr></thead><tbody id="printOutBody"></tbody></table></div>
+</section>
+
+<section id="reports" class="page">
+<div class="card"><div class="title-row"><h2>ملخص الموظفين</h2><button class="btn btn-primary btn-sm no-print" onclick="window.print()">🖨️ طباعة</button></div>
+<div class="no-print dept-print-box" style="margin-top:12px">
+  <div style="font-weight:800;margin-bottom:8px">طباعة كل قسم لحاله</div>
+  <div id="reportDepartmentButtons" class="dept-print-grid"></div>
+</div>
+<div class="row no-print"><div><label>الشهر</label><input id="monthFilter" type="month"></div><div><label>الموظف</label><select id="summaryEmployee"><option value="">الكل</option></select></div></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>الموظف</th><th>الحضور</th><th>الانصراف</th><th>التأخير</th><th>الغياب</th><th>آخر حضور</th><th>آخر انصراف</th></tr></thead><tbody id="summaryBody"></tbody></table></div></div>
+<div class="dept-print-only">
+  <h2 id="deptPrintTitle">تقرير القسم</h2>
+  <div id="deptPrintMeta" class="print-meta"></div>
+  <table>
+    <thead><tr><th>الموظف</th><th>الحضور</th><th>الانصراف</th><th>التأخير</th><th>الغياب</th><th>آخر حضور</th><th>آخر انصراف</th></tr></thead>
+    <tbody id="deptPrintBody"></tbody>
+  </table>
+</div>
+</section>
+
+<section id="settings" class="page">
+<div class="card"><div class="title-row"><h2>إعدادات المسؤول</h2><button class="btn btn-ghost btn-sm" id="lockBtn">🔒 قفل</button></div>
+<div class="row"><div><label>اسم المنشأة</label><input id="companyName"></div><div><label>سماح التأخير بالدقائق</label><input id="grace" type="number" min="0" max="120" value="10"></div></div>
+<div class="actions" style="margin-top:10px"><button class="btn btn-primary" id="saveSettings">حفظ</button><button class="btn btn-ghost" id="exportBtn">تصدير نسخة</button><label class="btn btn-ghost">استيراد نسخة<input id="importInput" type="file" accept=".json" style="display:none"></label><button class="btn btn-red" id="wipeBtn">حذف كل البيانات</button></div>
+<div class="notice info">هذا النظام محلي ولا يحتاج سيرفر. احفظ نسخة احتياطية دورية؛ الصور جزء من النسخة الاحتياطية.</div>
+</div>
+</section>
+</main>
+
+<nav>
+<button data-page="home" class="active"><span class="navicon">🏠</span>الحضور</button>
+<button data-page="employees"><span class="navicon">👥</span>الموظفون</button>
+<button data-page="logs"><span class="navicon">🧾</span>السجل</button>
+<button data-page="reports"><span class="navicon">📊</span>التقارير</button>
+<button data-page="settings"><span class="navicon">⚙️</span>الإعدادات</button>
+</nav>
+
+<div id="adminModal" class="modal"><div class="modal-card"><div class="modal-head"><h3 id="adminTitle">دخول المسؤول</h3><button class="btn btn-ghost btn-sm" onclick="closeModal()">إغلاق</button></div><div id="adminBody" style="margin-top:12px"></div></div></div>
+<div id="photoModal" class="modal"><div class="modal-card"><div class="modal-head"><h3>صورة العملية</h3><button class="btn btn-ghost btn-sm" onclick="closePhoto()">إغلاق</button></div><img id="bigPhoto" style="width:100%;max-height:70vh;object-fit:contain;border-radius:14px;margin-top:12px"><div id="bigMeta" class="small" style="margin-top:10px"></div></div></div>
+
+<script>
+const KEY='attendance_local_fresh_v5';
+let db={version:4,company:'نظام الحضور والانصراف',grace:10,adminSalt:'',adminHash:'',recoverySalt:'',recoveryHash:'',employees:[],logs:[]};
+let currentPhoto='';let adminUnlocked=false;let pendingAdminAction=null;
+
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,9);
+const today=()=>new Date().toISOString().slice(0,10);
+const dateOf=ts=>new Date(ts).toISOString().slice(0,10);
+const timeOf=ts=>new Date(ts).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const monthOf=ts=>dateOf(ts).slice(0,7);
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));return true}catch(e){toast('مساحة التخزين ممتلئة. صدّر نسخة احتياطية واحذف بيانات قديمة.');return false}}
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.version){db={...db,...x};db.employees=db.employees||[];db.logs=db.logs||[]}}catch(e){toast('تعذر قراءة البيانات المحلية')}} 
+async function hash(text){const b=new TextEncoder().encode(text);const d=await crypto.subtle.digest('SHA-256',b);return btoa(String.fromCharCode(...new Uint8Array(d)))}
+function makeRecoveryCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes=crypto.getRandomValues(new Uint8Array(12));
+  let out='';
+  for(let i=0;i<12;i++) out+=chars[bytes[i]%chars.length];
+  return out.slice(0,4)+'-'+out.slice(4,8)+'-'+out.slice(8,12);
+}
+function salt(){return crypto.getRandomValues(new Uint8Array(16)).reduce((s,x)=>s+String.fromCharCode(x),'');}
+function toast(m){$('toast').textContent=m;$('toast').style.display='block';clearTimeout(window.__t);window.__t=setTimeout(()=>$('toast').style.display='none',2600)}
+function closeModal(){$('adminModal').classList.remove('show')}
+function closePhoto(){$('photoModal').classList.remove('show')}
+function go(page,adminOnly=(page!=='home')){
+ if(page!=='home' && !adminUnlocked){
+   showAdmin(()=>go(page,true), !db.adminHash);
+   return;
+ }
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ const el=$(page); if(el)el.classList.add('active');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+ const btn=document.querySelector('.nav button[data-page="'+page+'"]'); if(btn)btn.classList.add('active');
+ if(page==='reports'){renderSummary();renderReportDepartmentButtons();}
+ if(page==='logs')renderLogs();
+ if(page==='employees')renderEmployees();
+}
+function findEmp(id){return db.employees.find(e=>e.id===id)}
+function showAdmin(action,first=false){
+ if(adminUnlocked){action();return}
+ if(!db.adminHash) first=true;
+ pendingAdminAction=action;
+ $('adminTitle').textContent=first?'إعداد كلمة مرور المسؤول':'دخول المسؤول';
+ $('adminBody').innerHTML=first?`
+ <div class="notice warn">أنشئ كلمة مرور المسؤول الآن. استخدم 6 أحرف/أرقام أو أكثر واحفظها في مكان آمن.</div>
+ <label style="margin-top:12px">كلمة المرور</label><input id="adminNew1" type="password">
+ <label style="margin-top:10px">تأكيد كلمة المرور</label><input id="adminNew2" type="password">
+ <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="setAdmin()">حفظ</button>`:`
+ <label>كلمة مرور المسؤول</label><input id="adminPass" type="password">
+ <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="unlock()">دخول</button>
+  <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="showResetAdmin()">🔐 نسيت كلمة المرور؟</button>
+  <div class="small" style="margin-top:8px;text-align:center">إعادة التعيين لا تحذف الموظفين أو سجلات الحضور أو الصور.</div>`;
+ $('adminModal').classList.add('show')
+}
+
+function showResetAdmin(){
+  $('adminTitle').textContent='استرداد كلمة مرور الإدارة';
+  $('adminBody').innerHTML=`
+    <div class="notice info">أدخل رمز الاسترداد الذي ظهر لك عند إعداد النظام. الرمز لا يمكن تخمينه عمليًا عند استخدامه كما هو.</div>
+    <label style="margin-top:12px">رمز الاسترداد</label>
+    <input id="recoveryCode" autocomplete="off" placeholder="XXXX-XXXX-XXXX" style="direction:ltr;text-align:center;letter-spacing:2px;text-transform:uppercase">
+    <label style="margin-top:10px">كلمة المرور الجديدة</label>
+    <input id="resetNew1" type="password" autocomplete="new-password" placeholder="6 أحرف/أرقام أو أكثر">
+    <label style="margin-top:10px">تأكيد كلمة المرور الجديدة</label>
+    <input id="resetNew2" type="password" autocomplete="new-password">
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="resetAdminPassword()">تحقق وإعادة التعيين</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="closeModal()">إلغاء</button>`;
+  $('adminModal').classList.add('show');
+}
+
+async function resetAdminPassword(){
+  const code=$('recoveryCode').value.trim().toUpperCase();
+  const a=$('resetNew1').value,b=$('resetNew2').value;
+  if(!/^([A-Z0-9]{4}-){2}[A-Z0-9]{4}$/.test(code)){toast('أدخل رمز الاسترداد بالشكل الصحيح');return}
+  if(!db.recoveryHash||!db.recoverySalt){toast('لا يوجد رمز استرداد مُسجل لهذا النظام');return}
+  if(await hash(db.recoverySalt+code)!==db.recoveryHash){toast('رمز الاسترداد غير صحيح');return}
+  if(a.length<6||a!==b){toast('كلمة المرور لا تطابق الشروط');return}
+
+  db.adminSalt=salt();
+  db.adminHash=await hash(db.adminSalt+a);
+  // Rotate the recovery code after successful use.
+  const newRecovery=makeRecoveryCode();
+  db.recoverySalt=salt();
+  db.recoveryHash=await hash(db.recoverySalt+newRecovery);
+  if(!save())return;
+
+  adminUnlocked=true;
+  closeModal();
+  $('adminTitle').textContent='تمت إعادة التعيين';
+  $('adminBody').innerHTML=`
+    <div class="notice info">تم تغيير كلمة المرور. ولأمان إضافي تم إنشاء رمز استرداد جديد وإلغاء الرمز القديم.</div>
+    <div style="font-size:24px;font-weight:900;letter-spacing:3px;text-align:center;padding:18px;background:#f8fafc;border:1px dashed #94a3b8;border-radius:14px;margin-top:12px;direction:ltr">${newRecovery}</div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">تم الحفظ</button>`;
+  $('adminModal').classList.add('show');
+}
+async function setAdmin(){
+  const a=$('adminNew1').value,b=$('adminNew2').value;
+  if(a.length<6||a!==b){toast('كلمة المرور لا تطابق الشروط');return}
+  db.adminSalt=salt();
+  db.adminHash=await hash(db.adminSalt+a);
+
+  const recovery=makeRecoveryCode();
+  db.recoverySalt=salt();
+  db.recoveryHash=await hash(db.recoverySalt+recovery);
+  db.initialized=true;
+  if(!save())return;
+
+  adminUnlocked=true;
+  closeModal();
+  $('adminTitle').textContent='رمز الاسترداد';
+  $('adminBody').innerHTML=`
+    <div class="notice warn">هذا الرمز هو وسيلة استرداد كلمة مرور الإدارة. احفظه في مكان آمن. لن يظهر لك مرة أخرى.</div>
+    <div style="font-size:24px;font-weight:900;letter-spacing:3px;text-align:center;padding:18px;background:#f8fafc;border:1px dashed #94a3b8;border-radius:14px;margin-top:12px;direction:ltr">${recovery}</div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">تم الحفظ</button>`;
+  $('adminModal').classList.add('show');
+}
+async function unlock(){if(await hash(db.adminSalt+$('adminPass').value)!==db.adminHash){toast('كلمة المرور خطأ');return}adminUnlocked=true;closeModal();const f=pendingAdminAction;pendingAdminAction=null;if(f)f()}
+function lock(){adminUnlocked=false;go('home');toast('تم قفل وضع المسؤول')}
+
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+
+async function resizeDataUrl(file){
+ return new Promise((resolve,reject)=>{const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{let w=img.width,h=img.height,s=Math.min(1,1200/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(u);resolve(c.toDataURL('image/jpeg',.78))};img.onerror=reject;img.src=u})
+}
+$('cameraInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{currentPhoto=await resizeDataUrl(f);$('photoPreview').src=currentPhoto;$('photoPreview').style.display='block';$('photoPlaceholder').style.display='none';$('saveBtn').disabled=!db.employees.some(e=>String(e.code)===$('attCode').value.trim());$('attStatus').textContent='تم التقاط الصورة. تحقق من الرقم الوظيفي ثم سجّل العملية.'}catch(_){toast('تعذر معالجة الصورة')}})
+$('photoBtn').onclick=()=>$('cameraInput').click();
+$('attCode').addEventListener('input',()=>{
+  const code=$('attCode').value.trim();
+  const e=db.employees.find(x=>String(x.code)===code);
+  $('attEmployeeName').value=e?e.name:'';
+  $('attStatus').textContent=code?(e?'تم التعرف على الموظف. التقط الصورة لإكمال التسجيل.':'الرقم الوظيفي غير موجود'):'';
+  $('saveBtn').disabled=!currentPhoto||!e;
+});
+
+$('addEmployee').onclick=async()=>{
+ showAdmin(async()=>{
+ const name=$('empName').value.trim(),code=$('empCode').value.trim(),dept=$('empDept').value.trim(),start=$('empStart').value,end=$('empEnd').value,p1=$('empPin').value,p2=$('empPin2').value;
+ if(!name||!code||!start||!end||!/^\d{4,8}$/.test(p1)||p1!==p2){toast('أكمل البيانات وتأكد من الرمز');return}
+ if(end<=start){toast('نهاية الدوام يجب أن تكون بعد البداية');return}
+ if(db.employees.some(e=>e.code===code)){toast('رقم الموظف موجود مسبقًا');return}
+ const ps=salt();db.employees.push({id:uid(),name,code,dept,start,end,pinSalt:ps,pinHash:await hash(ps+p1),createdAt:new Date().toISOString()});save();
+ ['empName','empCode','empDept','empPin','empPin2'].forEach(id=>$(id).value='');$('empStart').value='08:00';$('empEnd').value='17:00';toast('تمت إضافة الموظف');renderAll()
+ })
+}
+$('empSearch').addEventListener('input',renderEmployees);$('empDeptFilter').addEventListener('change',renderEmployees)
+
+function lateFor(e,ts){const d=new Date(ts);const [h,m]=String(e.start||'08:00').split(':').map(Number);const t=new Date(ts);t.setHours(h,m,0,0);return d>new Date(t.getTime()+Number(db.grace||0)*60000)}
+function earlyFor(e,ts){const d=new Date(ts);const [h,m]=String(e.end||'17:00').split(':').map(Number);const t=new Date(ts);t.setHours(h,m,0,0);return d<t}
+
+$('saveBtn').onclick=async()=>{
+  const code=$('attCode').value.trim(),type=$('attType').value,note=$('attNote').value.trim();
+  const e=db.employees.find(x=>String(x.code)===code);
+  if(!code){toast('أدخل الرقم الوظيفي');return}
+  if(!e){$('attEmployeeName').value='';toast('الرقم الوظيفي غير موجود');return}
+  if(!currentPhoto){toast('التقاط الصورة إلزامي');return}
+  const day=today(),mine=db.logs.filter(l=>l.employeeId===e.id&&dateOf(l.ts)===day),last=mine.slice().sort((a,b)=>b.ts.localeCompare(a.ts))[0];
+  if(type==='in'&&last?.type==='in'){toast('تم تسجيل حضور مسبقًا ولم يسجل انصراف');return}
+  if(type==='out'&&!mine.some(l=>l.type==='in')){toast('لا يمكن تسجيل الانصراف قبل الحضور');return}
+  if(type==='out'&&mine.some(l=>l.type==='out')){toast('تم تسجيل الانصراف اليوم بالفعل');return}
+  const ts=new Date().toISOString(),log={id:uid(),employeeId:e.id,type,ts,photo:currentPhoto,note,late:type==='in'&&lateFor(e,ts),early:type==='out'&&earlyFor(e,ts)};
+  db.logs.push(log);save();currentPhoto='';$('photoPreview').style.display='none';$('photoPlaceholder').style.display='block';$('saveBtn').disabled=true;
+  $('attCode').value='';$('attEmployeeName').value='';$('attNote').value='';$('cameraInput').value='';
+  $('attStatus').textContent=`تم تسجيل ${type==='in'?'الحضور':'الانصراف'} للموظف ${e.name} في ${timeOf(ts)}`;toast('تم الحفظ');renderAll();
+}
+function renderSelectors(){
+ const opts='<option value="">الكل</option>'+db.employees.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');$('logEmployee').innerHTML=opts;$('summaryEmployee').innerHTML=opts;
+}
+async function renderHome(){
+ const d=today(),logs=db.logs.filter(l=>dateOf(l.ts)===d);$('statEmployees').textContent=db.employees.length;$('statIn').textContent=logs.filter(l=>l.type==='in').length;$('statOut').textContent=logs.filter(l=>l.type==='out').length;$('statLate').textContent=logs.filter(l=>l.late).length;
+ const rows=db.logs.slice().sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,8).map(l=>{const e=findEmp(l.employeeId);return `<tr><td><img class="thumb" src="${l.photo}" onclick="showPhoto('${l.id}')"></td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}">${l.type==='in'?'حضور':'انصراف'}</span></td><td>${l.late?'<span class="badge badge-late">متأخر</span>':l.early?'<span class="badge badge-late">انصراف مبكر</span>':'<span class="badge badge-ok">طبيعي</span>'}</td></tr>`}).join('');
+ $('recentBody').innerHTML=rows||'<tr><td colspan="5" class="empty">لا توجد عمليات</td></tr>'
+}
+function filteredLogs(){
+ const f=$('fromDate').value,t=$('toDate').value,e=$('logEmployee').value,ty=$('logType').value,st=$('logStatus').value;
+ return db.logs.filter(l=>{const d=dateOf(l.ts);const okDate=(!f||d>=f)&&(!t||d<=t);const okE=!e||l.employeeId===e;const okT=!ty||l.type===ty;const okS=!st||(st==='late'&&l.late)||(st==='early'&&l.early)||(st==='normal'&&!l.late&&!l.early);return okDate&&okE&&okT&&okS}).sort((a,b)=>b.ts.localeCompare(a.ts))
+}
+function renderLogs(){
+ const logs=filteredLogs();$('logsBody').innerHTML=logs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td><img class="thumb" src="${l.photo}" onclick="showPhoto('${l.id}')"></td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}">${l.type==='in'?'حضور':'انصراف'}</span></td><td>${l.late?'<span class="badge badge-late">متأخر</span>':l.early?'<span class="badge badge-late">انصراف مبكر</span>':'طبيعي'}</td><td><button class="btn btn-ghost btn-sm" onclick="showPhoto('${l.id}')">عرض</button></td></tr>`}).join('')||'<tr><td colspan="8" class="empty">لا توجد سجلات</td></tr>';
+ const ins=logs.filter(l=>l.type==='in'),outs=logs.filter(l=>l.type==='out');
+ $('printInBody').innerHTML=ins.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.start||'08:00')}</td><td>${l.late?'متأخر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات حضور</td></tr>';
+ $('printOutBody').innerHTML=outs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.end||'17:00')}</td><td>${l.early?'انصراف مبكر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات انصراف</td></tr>';
+ const m=`الفترة: ${$('fromDate').value||'—'} إلى ${$('toDate').value||'—'}`;$('printCompanyIn').textContent=db.company+' — الحضور';$('printCompanyOut').textContent=db.company+' — الانصراف';$('printMetaIn').textContent=m;$('printMetaOut').textContent=m
+}
+function renderDepartmentFilter(){
+ const sel=$('empDeptFilter');
+ if(!sel)return;
+ const current=sel.value;
+ const deps=[...new Set((db.employees||[]).map(e=>(e.dept||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
+ sel.innerHTML='<option value="">كل الأقسام</option>'+deps.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
+ if(deps.includes(current)) sel.value=current;
+}
+function renderEmployees(){
+ const q=($('empSearch').value||'').trim().toLowerCase();
+ const dept=$('empDeptFilter')?.value||'';
+ const list=(db.employees||[]).filter(e=>{
+   const matchesSearch=!q||String(e.name||'').toLowerCase().includes(q)||String(e.code||'').toLowerCase().includes(q)||String(e.dept||'').toLowerCase().includes(q);
+   const matchesDept=!dept||(e.dept||'')===dept;
+   return matchesSearch&&matchesDept;
+ });
+ $('employeesBody').innerHTML=list.map(e=>`<tr><td>${esc(e.code)}</td><td>${esc(e.name)}</td><td>${esc(e.dept)}</td><td>${esc(e.start)}</td><td>${esc(e.end)}</td><td><button class="btn btn-ghost btn-sm" onclick="editEmployee('${e.id}')">تعديل</button> <button class="btn btn-red btn-sm" onclick="deleteEmployee('${e.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا يوجد موظفون</td></tr>';
+}
+function editEmployee(id){
+ showAdmin(async()=>{const e=findEmp(id);if(!e)return;$('adminTitle').textContent='تعديل الموظف';$('adminBody').innerHTML=`<label>الاسم</label><input id="edName" value="${esc(e.name)}"><div class="row" style="margin-top:10px"><div><label>بداية الدوام</label><input id="edStart" type="time" value="${esc(e.start)}"></div><div><label>نهاية الدوام</label><input id="edEnd" type="time" value="${esc(e.end)}"></div></div><label style="margin-top:10px">القسم</label><input id="edDept" value="${esc(e.dept)}"><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveEdit('${id}')">حفظ</button>`;$('adminModal').classList.add('show')})
+}
+function saveEdit(id){const e=findEmp(id);const a=$('edName').value.trim(),s=$('edStart').value,en=$('edEnd').value,d=$('edDept').value.trim();if(!a||!s||!en||en<=s){toast('تحقق من الاسم وأوقات الدوام');return}Object.assign(e,{name:a,start:s,end:en,dept:d});save();closeModal();toast('تم تحديث الموظف');renderAll()}
+function deleteEmployee(id){showAdmin(()=>{const e=findEmp(id);if(!e)return;if(!confirm('حذف الموظف وسجلاته؟'))return;db.employees=db.employees.filter(x=>x.id!==id);db.logs=db.logs.filter(x=>x.employeeId!==id);save();toast('تم الحذف');renderAll()})}
+function showPhoto(id){const l=db.logs.find(x=>x.id===id);if(!l)return;const e=findEmp(l.employeeId);$('bigPhoto').src=l.photo;$('bigMeta').innerHTML=`${esc(e?.name||'—')} — ${dateOf(l.ts)} ${timeOf(l.ts)}<br>${l.type==='in'?'حضور':'انصراف'}${l.note?'<br>ملاحظة: '+esc(l.note):''}`;$('photoModal').classList.add('show')}
+function workingDaysInMonth(month){
+ const [y,m]=month.split('-').map(Number), days=new Date(y,m,0).getDate(); let n=0;
+ for(let d=1;d<=days;d++){const wd=new Date(y,m-1,d).getDay(); if(wd!==5)n++;}
+ return n;
+}
+function absenceCountForEmployee(e,month){
+ const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();
+ const attended=new Set(db.logs.filter(l=>l.employeeId===e.id&&l.type==='in'&&monthOf(l.ts)===month).map(l=>dateOf(l.ts)));
+ let absent=0;
+ for(let d=1;d<=days;d++){
+   const dt=new Date(y,m-1,d),wd=dt.getDay();
+   if(wd===5)continue;
+   const key=dt.toISOString().slice(0,10);
+   if(!attended.has(key))absent++;
+ }
+ return absent;
+}
+function renderSummary(){const month=$('monthFilter').value||new Date().toISOString().slice(0,7),id=$('summaryEmployee').value;const rows=db.employees.filter(e=>!id||e.id===id).map(e=>{const a=db.logs.filter(l=>l.employeeId===e.id&&monthOf(l.ts)===month),ins=a.filter(l=>l.type==='in'),outs=a.filter(l=>l.type==='out'),li=ins.slice().sort((x,y)=>y.ts.localeCompare(x.ts))[0],lo=outs.slice().sort((x,y)=>y.ts.localeCompare(x.ts))[0],absent=absenceCountForEmployee(e,month);return `<tr><td>${esc(e.name)}</td><td>${ins.length}</td><td>${outs.length}</td><td>${ins.filter(x=>x.late).length}</td><td>${absent}</td><td>${li?dateOf(li.ts)+' '+timeOf(li.ts):'—'}</td><td>${lo?dateOf(lo.ts)+' '+timeOf(lo.ts):'—'}</td></tr>`}).join('');$('summaryBody').innerHTML=rows||'<tr><td colspan="7" class="empty">لا توجد بيانات</td></tr>'}
+
+function renderReportDepartmentButtons(){
+  const host=$('reportDepartmentButtons');
+  if(!host)return;
+  const deps=[...new Set((db.employees||[]).map(e=>(e.dept||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
+  host.innerHTML=deps.length
+    ? deps.map(d=>`<button class="btn btn-ghost" onclick="printDepartmentReport(this.dataset.dept)" data-dept="${esc(d)}">🖨️ ${esc(d)}</button>`).join('')
+    : '<div class="small">أضف الموظفين والأقسام أولًا</div>';
+}
+
+function printDepartmentReport(dept){
+ const month=$('monthFilter').value||new Date().toISOString().slice(0,7);
+ const employees=(db.employees||[]).filter(e=>(e.dept||'')===dept);
+ const rows=employees.map(e=>{
+   const logs=db.logs.filter(l=>l.employeeId===e.id&&monthOf(l.ts)===month);
+   const ins=logs.filter(l=>l.type==='in');
+   const outs=logs.filter(l=>l.type==='out');
+   const li=ins.slice().sort((a,b)=>b.ts.localeCompare(a.ts))[0];
+   const lo=outs.slice().sort((a,b)=>b.ts.localeCompare(a.ts))[0];
+   const absent=absenceCountForEmployee(e,month);
+   return `<tr>
+     <td>${esc(e.name)}</td>
+     <td>${ins.length}</td>
+     <td>${outs.length}</td>
+     <td>${ins.filter(x=>x.late).length}</td>
+     <td>${absent}</td>
+     <td>${li?dateOf(li.ts)+' '+timeOf(li.ts):'—'}</td>
+     <td>${lo?dateOf(lo.ts)+' '+timeOf(lo.ts):'—'}</td>
+   </tr>`;
+ }).join('')||'<tr><td colspan="7">لا توجد بيانات لهذا القسم</td></tr>';
+
+ const company=db.company||'نظام الحضور والانصراف';
+ const html=`<!doctype html><html dir="rtl"><head><meta charset="utf-8">
+ <title>تقرير قسم ${esc(dept)}</title>
+ <style>
+  @page{size:auto;margin:15mm}
+  body{font-family:Arial,Tahoma,sans-serif;color:#111;margin:0}
+  h1{text-align:center;font-size:24px;margin:0 0 8px}
+  h2{text-align:center;font-size:20px;margin:0 0 8px}
+  .meta{text-align:center;font-size:14px;margin-bottom:18px}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #222;padding:9px 7px;text-align:center;font-size:13px}
+  th{font-weight:800;background:#eee}
+  .foot{text-align:center;margin-top:16px;font-size:11px;color:#555}
+ </style></head><body>
+ <h1>${esc(company)}</h1>
+ <h2>القسم: ${esc(dept)}</h2>
+ <div class="meta">تقرير الحضور والانصراف — الشهر: ${esc(month)}</div>
+ <table>
+  <thead><tr><th>الموظف</th><th>الحضور</th><th>الانصراف</th><th>التأخير</th><th>الغياب</th><th>آخر حضور</th><th>آخر انصراف</th></tr></thead>
+  <tbody>${rows}</tbody>
+ </table>
+ <div class="foot">عدد الموظفين: ${employees.length} — أيام الغياب محسوبة لكل أيام الدوام من السبت إلى الخميس التي لا يوجد فيها تسجيل حضور، والجمعة فقط إجازة أسبوعية.</div>
+ </body></html>`;
+
+ const w=window.open('','_blank','width=1000,height=750');
+ if(!w){toast('السماح بالنوافذ المنبثقة مطلوب للطباعة');return}
+ w.document.open();
+ w.document.write(html);
+ w.document.close();
+ w.focus();
+ setTimeout(()=>{w.print();},350);
+}
+function renderAll(){renderSelectors();renderHome();renderDepartmentFilter();renderEmployees();renderLogs();renderSummary();renderReportDepartmentButtons();renderSettings()}
+$('printBtn').onclick=()=>showAdmin(()=>window.print());$('backupBtn').onclick=()=>showAdmin(exportBackup);$('monthFilter').value=new Date().toISOString().slice(0,7);
+['fromDate','toDate','logEmployee','logType','logStatus'].forEach(id=>$(id).addEventListener('input',renderLogs));$('monthFilter').addEventListener('input',()=>{renderSummary();renderReportDepartmentButtons()});$('summaryEmployee').addEventListener('change',renderSummary);
+$('saveSettings').onclick=()=>showAdmin(()=>{db.company=$('companyName').value.trim()||'نظام الحضور والانصراف';db.grace=Math.max(0,Math.min(120,Number($('grace').value)||0));save();renderAll();toast('تم حفظ الإعدادات')});
+$('lockBtn').onclick=lock;
+async function exportBackup(){const blob=new Blob([JSON.stringify(db)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='نسخة_احتياطية_الحضور_'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('تم تصدير النسخة الاحتياطية')}
+$('exportBtn').onclick=()=>showAdmin(exportBackup);
+$('importInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;showAdmin(async()=>{try{const x=JSON.parse(await f.text());if(!x||!Array.isArray(x.employees)||!Array.isArray(x.logs))throw new Error('النسخة غير صحيحة');if(!confirm('استبدال البيانات الحالية؟'))return;db={...db,...x};save();renderAll();toast('تم الاستيراد')}catch(err){toast('فشل الاستيراد')}});e.target.value=''});
+$('wipeBtn').onclick=()=>showAdmin(()=>{if(!confirm('حذف جميع البيانات نهائيًا؟'))return;if(prompt('اكتب DELETE للتأكيد')!=='DELETE')return;const admin=db.adminHash&&{adminHash:db.adminHash,adminSalt:db.adminSalt};db={version:4,company:'نظام الحضور والانصراف',grace:10,employees:[],logs:[],...(admin||{})};save();renderAll();toast('تم حذف البيانات')});
+
+function resetAttendanceForm(){
+  $('attCode').value='';$('attEmployeeName').value='';$('attNote').value='';$('attType').value='in';
+  currentPhoto='';$('photoPreview').style.display='none';$('photoPlaceholder').style.display='block';$('saveBtn').disabled=true;$('attStatus').textContent='';
+}
+function tick(){const now=new Date();$('clock').textContent=now.toLocaleDateString('ar-SA',{weekday:'short',year:'numeric',month:'2-digit',day:'2-digit'})+' — '+now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+setInterval(tick,1000);tick();load();
+renderAll();
+</script>
+
+
+<!-- Cloud/Supabase layer: attendance open to employees, management protected -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://bobsgtteimangtknsydl.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_WMm3-GJMHzqn1bm9gkawAA_AnlTY0lI';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+});
+const PHOTO_BUCKET='attendance-photos';
+let cloudReady=false;
+let currentPhotoFile=null;
+let cloudDepartments=[];
+
+function mapCloudEmployee(r){
+  return {
+    id:String(r.id),
+    name:r.full_name||'',
+    code:String(r.employee_number||''),
+    dept:r.department_name||r.dept||'',
+    departmentId:r.department_id||null,
+    start:r.start_time||'08:00',
+    end:r.end_time||'17:00',
+    active:r.is_active!==false,
+    createdAt:r.created_at||''
+  };
+}
+function mapCloudLog(r){
+  const type=r.attendance_type==='check_in'?'in':'out';
+  const e=findEmp(String(r.employee_id));
+  const late=type==='in' && e ? lateFor(e,r.attendance_time) : false;
+  const early=type==='out' && e ? earlyFor(e,r.attendance_time) : false;
+  return {
+    id:String(r.id),employeeId:String(r.employee_id),type,ts:r.attendance_time,
+    photo:r.photo_url||'',note:r.note||'',late,early
+  };
+}
+function clearCloudData(){
+  db.employees=[];db.logs=[];cloudDepartments=[];cloudReady=false;
+}
+async function cloudSession(){
+  const {data:{session},error}=await sb.auth.getSession();
+  if(error) console.error(error);
+  return session||null;
+}
+async function ensureSystemSettings(){
+  let {data,error}=await sb.from('system_settings').select('id,company_name,late_allowed_minutes,work_start_time,work_end_time').eq('id',1).maybeSingle();
+  if(error){console.error(error);return null}
+  if(!data){
+    const ins=await sb.from('system_settings').insert({
+      id:1,company_name:'نظام الحضور والانصراف',late_allowed_minutes:10,
+      work_start_time:'08:00',work_end_time:'17:00'
+    }).select('id,company_name,late_allowed_minutes,work_start_time,work_end_time').single();
+    if(ins.error){console.error(ins.error);return null}
+    data=ins.data;
+  }
+  return data;
+}
+async function loadCloudAdmin(){
+  const session=await cloudSession();
+  if(!session){adminUnlocked=false;clearCloudData();return false}
+
+  // تحقق المسؤول أولاً، ثم حمّل كل بيانات الإدارة دفعة واحدة.
+  const {data:adminRow,error:adminErr}=await sb.from('admins')
+    .select('user_id').eq('user_id',session.user.id).eq('is_active',true).maybeSingle();
+  if(adminErr){
+    console.error('ADMIN CHECK:',adminErr);
+    toast('تعذر التحقق من صلاحيات المسؤول');
+    return false;
+  }
+  if(!adminRow){
+    toast('هذا الحساب غير مصرح له كمسؤول');
+    return false;
+  }
+
+  const [er,dr,lr,sr]=await Promise.all([
+    sb.from('employees').select('id,employee_number,full_name,department_id,is_active,created_at').order('employee_number',{ascending:true}),
+    sb.from('departments').select('id,name').order('name',{ascending:true}),
+    sb.from('attendance').select('id,employee_id,attendance_type,attendance_time,photo_url,note,created_at').order('attendance_time',{ascending:false}),
+    sb.from('system_settings').select('id,company_name,late_allowed_minutes,work_start_time,work_end_time').eq('id',1).maybeSingle()
+  ]);
+
+  const failed=[];
+  if(er.error) failed.push('الموظفين');
+  if(dr.error) failed.push('الأقسام');
+  if(lr.error) failed.push('الحضور');
+  if(sr.error) failed.push('الإعدادات');
+  if(failed.length){
+    console.error('CLOUD LOAD ERRORS:',{employees:er.error,departments:dr.error,attendance:lr.error,settings:sr.error});
+    toast('تعذر تحميل: '+failed.join('، '));
+    return false;
+  }
+
+  cloudDepartments=dr.data||[];
+  const deptMap=new Map(cloudDepartments.map(d=>[String(d.id),d.name]));
+  const settings=sr.data||await ensureSystemSettings();
+
+  const start=settings?.work_start_time||'08:00';
+  const end=settings?.work_end_time||'17:00';
+  db.company=settings?.company_name||'نظام الحضور والانصراف';
+  db.grace=Number(settings?.late_allowed_minutes??10);
+
+  db.employees=(er.data||[]).map(r=>mapCloudEmployee({
+    ...r,
+    department_name:deptMap.get(String(r.department_id))||'',
+    start_time:start,end_time:end
+  }));
+  db.logs=(lr.data||[]).map(mapCloudLog);
+
+  cloudReady=true;adminUnlocked=true;
+  return true;
+}
+
+/* Public lookup: only the matching employee is returned through the RPC. */
+async function lookupCloudEmployee(code){
+  const value=String(code||'').trim();
+  if(!value)return null;
+  const {data,error}=await sb.rpc('get_employee_status',{p_employee_number:value});
+  if(error){
+    console.error(error);
+    toast('تعذر البحث عن الموظف');
+    return null;
+  }
+  const r=Array.isArray(data)?data[0]:data;
+  if(!r)return null;
+  return {
+    id:String(r.employee_id||r.id||''),
+    code:String(r.employee_number||value),
+    name:r.full_name||r.name||'',
+    dept:r.department_name||r.dept||'',
+    start:r.work_start_time||'08:00',
+    end:r.work_end_time||'17:00'
+  };
+}
+
+function dataUrlToBlob(dataUrl){
+  const parts=dataUrl.split(',');
+  const mime=(parts[0].match(/data:(.*?);base64/)||[])[1]||'image/jpeg';
+  const bytes=atob(parts[1]);
+  const arr=new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+async function signedPhotoUrl(path){
+  if(!path)return '';
+  if(/^data:image\//.test(path))return path;
+  const {data,error}=await sb.storage.from(PHOTO_BUCKET).createSignedUrl(path,300);
+  if(error){console.error(error);return ''}
+  return data?.signedUrl||'';
+}
+async function uploadAttendancePhoto(code){
+  if(!currentPhoto)throw new Error('الصورة مطلوبة');
+  const blob=dataUrlToBlob(currentPhoto);
+  const safeCode=String(code).replace(/[^0-9A-Za-z_-]/g,'_');
+  const path=safeCode+'/'+Date.now()+'-'+crypto.randomUUID()+'.jpg';
+  const {error}=await sb.storage.from(PHOTO_BUCKET).upload(path,blob,{
+    contentType:'image/jpeg',upsert:false
+  });
+  if(error)throw error;
+  return path;
+}
+
+/* Employee screen */
+$('attCode').oninput=async()=>{
+  const code=$('attCode').value.trim();
+  currentPhotoFile=null;
+  if(!code){
+    $('attEmployeeName').value='';$('attStatus').textContent='';$('saveBtn').disabled=true;return;
+  }
+  const e=await lookupCloudEmployee(code);
+  if(e){
+    $('attEmployeeName').value=e.name||'';
+    $('attStatus').textContent='تم التعرف على الموظف. التقط الصورة لإكمال التسجيل.';
+    $('saveBtn').disabled=!currentPhoto;
+  }else{
+    $('attEmployeeName').value='';
+    $('attStatus').textContent='الرقم الوظيفي غير موجود';
+    $('saveBtn').disabled=true;
+  }
+};
+
+$('cameraInput').onchange=async e=>{
+  const f=e.target.files?.[0];
+  if(!f)return;
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)){
+    toast('اختر صورة JPG أو PNG أو WEBP');return;
+  }
+  try{
+    currentPhoto=await resizeDataUrl(f);
+    currentPhotoFile=f;
+    $('photoPreview').src=currentPhoto;
+    $('photoPreview').style.display='block';
+    $('photoPlaceholder').style.display='none';
+    const code=$('attCode').value.trim();
+    const emp=code?await lookupCloudEmployee(code):null;
+    $('saveBtn').disabled=!(currentPhoto&&emp);
+    $('attStatus').textContent=emp?'تم التقاط الصورة. يمكنك تسجيل العملية.':'تم التقاط الصورة. أدخل رقمًا وظيفيًا صحيحًا.';
+  }catch(err){
+    console.error(err);toast('تعذر معالجة الصورة');
+  }
+};
+
+$('saveBtn').onclick=async()=>{
+  const code=$('attCode').value.trim();
+  const type=$('attType').value;
+  const note=$('attNote').value.trim();
+  if(!code){toast('أدخل الرقم الوظيفي');return}
+  if(!currentPhoto){toast('التقاط الصورة إلزامي');return}
+
+  const emp=await lookupCloudEmployee(code);
+  if(!emp){toast('الرقم الوظيفي غير موجود');return}
+
+  $('saveBtn').disabled=true;
+  $('attStatus').textContent='جاري رفع الصورة وتسجيل العملية...';
+  let photoPath='';
+  try{
+    photoPath=await uploadAttendancePhoto(code);
+    const {data,error}=await sb.rpc('register_attendance',{
+      p_employee_number:code,
+      p_attendance_type:type==='in'?'check_in':'check_out',
+      p_photo_url:photoPath,
+      p_note:note||null
+    });
+    if(error){
+      await sb.storage.from(PHOTO_BUCKET).remove([photoPath]);
+      throw error;
+    }
+    const row=Array.isArray(data)?data[0]:data;
+    currentPhoto='';currentPhotoFile=null;
+    $('photoPreview').style.display='none';$('photoPlaceholder').style.display='block';
+    $('attCode').value='';$('attEmployeeName').value='';$('attNote').value='';$('cameraInput').value='';
+    $('saveBtn').disabled=true;
+    const ts=row?.attendance_time||row?.ts||new Date().toISOString();
+    $('attStatus').textContent=`تم تسجيل ${type==='in'?'الحضور':'الانصراف'} للموظف ${row?.full_name||emp.name} في ${timeOf(ts)}`;
+    toast('تم تسجيل العملية بنجاح');
+  }catch(err){
+    console.error(err);
+    $('attStatus').textContent='تعذر تسجيل العملية';
+    $('saveBtn').disabled=false;
+    toast(err?.message||'تعذر تسجيل العملية');
+  }
+};
+
+/* Admin authentication: Supabase Auth only */
+async function showAdmin(action){
+  const session=await cloudSession();
+  if(session){
+    const ok=await loadCloudAdmin();
+    if(ok){action();renderAll();}
+    return;
+  }
+  pendingAdminAction=action;
+  $('adminTitle').textContent='دخول المسؤول';
+  $('adminBody').innerHTML=`
+    <div class="notice info">دخول الإدارة يتم من خلال حساب المسؤول في Supabase.</div>
+    <label style="margin-top:12px">البريد الإلكتروني</label>
+    <input id="cloudAdminEmail" type="email" autocomplete="username" placeholder="البريد المسجل في Supabase">
+    <label style="margin-top:10px">كلمة المرور</label>
+    <input id="cloudAdminPass" type="password" autocomplete="current-password">
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="unlockCloudAdmin()">دخول</button>`;
+  $('adminModal').classList.add('show');
+}
+async function unlockCloudAdmin(){
+  const email=$('cloudAdminEmail').value.trim();
+  const password=$('cloudAdminPass').value;
+  if(!email||!password){toast('أدخل البريد وكلمة المرور');return}
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  if(error){console.error(error);toast('بيانات دخول المسؤول غير صحيحة');return}
+  const ok=await loadCloudAdmin();
+  if(!ok)return;
+  closeModal();
+  const f=pendingAdminAction;pendingAdminAction=null;
+  if(f)f();
+  renderAll();
+  toast('تم دخول المسؤول');
+}
+function go(page){
+  if(page!=='home'&&!adminUnlocked){
+    showAdmin(()=>go(page));return;
+  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=$(page);if(el)el.classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  const btn=document.querySelector('nav button[data-page="'+page+'"]');if(btn)btn.classList.add('active');
+  if(page==='reports'){renderSummary();renderReportDepartmentButtons()}
+  if(page==='logs')renderLogs();
+  if(page==='employees')renderEmployees();
+  if(page==='settings')renderSettings();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+
+/* Department helpers */
+async function getOrCreateDepartment(name){
+  const n=String(name||'').trim();
+  if(!n)return null;
+  let d=cloudDepartments.find(x=>x.name===n);
+  if(d)return d;
+  const {data,error}=await sb.from('departments').insert({name:n}).select('id,name').single();
+  if(error){
+    const retry=await sb.from('departments').select('id,name').eq('name',n).maybeSingle();
+    if(retry.data)return retry.data;
+    throw error;
+  }
+  cloudDepartments.push(data);
+  return data;
+}
+
+/* Admin CRUD */
+$('addEmployee').onclick=async()=>{
+  if(!adminUnlocked){showAdmin(()=>$('addEmployee').click());return}
+  const name=$('empName').value.trim();
+  const code=$('empCode').value.trim();
+  const dept=$('empDept').value.trim();
+  const start=$('empStart').value||'08:00';
+  const end=$('empEnd').value||'17:00';
+  if(!name||!code||!start||!end){toast('أكمل بيانات الموظف');return}
+  if(!/^\d{4,8}$/.test(code)){toast('الرقم الوظيفي يجب أن يكون من 4 إلى 8 أرقام');return}
+  if(end<=start){toast('نهاية الدوام يجب أن تكون بعد البداية');return}
+
+  let department_id=null;
+  try{
+    const d=await getOrCreateDepartment(dept);
+    department_id=d?.id||null;
+  }catch(err){
+    console.error(err);toast('تعذر حفظ القسم');return;
+  }
+
+  const {error}=await sb.from('employees').insert({
+    employee_number:code,full_name:name,department_id,is_active:true
+  });
+  if(error){
+    console.error(error);
+    toast(error.message?.includes('duplicate')?'رقم الموظف موجود مسبقًا':'تعذر إضافة الموظف');
+    return;
+  }
+  await ensureSystemSettings();
+  await loadCloudAdmin();
+  ['empName','empCode','empDept','empPin','empPin2'].forEach(id=>{if($(id))$(id).value=''});
+  $('empStart').value='08:00';$('empEnd').value='17:00';
+  toast('تمت إضافة الموظف');renderAll();
+};
+
+window.editEmployee=function(id){
+  showAdmin(async()=>{
+    const e=findEmp(id);if(!e)return;
+    $('adminTitle').textContent='تعديل الموظف';
+    $('adminBody').innerHTML=`
+      <label>الاسم</label><input id="edName" value="${esc(e.name)}">
+      <label style="margin-top:10px">القسم</label><input id="edDept" value="${esc(e.dept)}">
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveCloudEdit('${id}')">حفظ</button>`;
+    $('adminModal').classList.add('show');
+  });
+};
+window.saveCloudEdit=async function(id){
+  const a=$('edName').value.trim();
+  const d=$('edDept').value.trim();
+  if(!a){toast('أدخل اسم الموظف');return}
+  let department_id=null;
+  try{
+    const dep=await getOrCreateDepartment(d);
+    department_id=dep?.id||null;
+  }catch(err){console.error(err);toast('تعذر حفظ القسم');return}
+  const {error}=await sb.from('employees').update({
+    full_name:a,department_id
+  }).eq('id',id);
+  if(error){console.error(error);toast('تعذر تحديث الموظف');return}
+  closeModal();await loadCloudAdmin();toast('تم تحديث الموظف');renderAll();
+};
+window.deleteEmployee=function(id){
+  showAdmin(async()=>{
+    if(!confirm('حذف الموظف؟ إذا كان لديه سجلات حضور لن يسمح النظام بحذفه.'))return;
+    const {error}=await sb.from('employees').delete().eq('id',id);
+    if(error){
+      console.error(error);
+      toast('تعذر حذف الموظف. إذا كان لديه سجلات حضور استخدم تعطيل الموظف.');
+      return;
+    }
+    await loadCloudAdmin();toast('تم الحذف');renderAll();
+  });
+};
+
+$('saveSettings').onclick=()=>showAdmin(async()=>{
+  const company=$('companyName').value.trim()||'نظام الحضور والانصراف';
+  const grace=Math.max(0,Math.min(120,Number($('grace').value)||0));
+  const {error}=await sb.from('system_settings').upsert({
+    id:1,company_name:company,late_allowed_minutes:grace,
+    work_start_time:'08:00',work_end_time:'17:00',updated_at:new Date().toISOString()
+  });
+  if(error){console.error(error);toast('تعذر حفظ الإعدادات');return}
+  await loadCloudAdmin();toast('تم حفظ الإعدادات');renderAll();
+});
+$('lockBtn').onclick=async()=>{
+  await sb.auth.signOut();
+  adminUnlocked=false;clearCloudData();closeModal();go('home');resetAttendanceForm();
+  toast('تم قفل وضع المسؤول');
+};
+$('wipeBtn').onclick=()=>showAdmin(async()=>{
+  if(!confirm('حذف جميع الموظفين وسجلات الحضور نهائيًا من Supabase؟'))return;
+  if(prompt('اكتب DELETE للتأكيد')!=='DELETE')return;
+  const {error}=await sb.from('employees').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  if(error){console.error(error);toast('تعذر حذف البيانات. قد توجد سجلات مرتبطة بالموظفين.');return}
+  await loadCloudAdmin();toast('تم حذف البيانات');renderAll();
+});
+$('exportBtn').onclick=()=>showAdmin(async()=>{
+  await loadCloudAdmin();
+  const backup={version:6,company:db.company,grace:db.grace,employees:db.employees,logs:db.logs,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='attendance-backup-'+today()+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+});
+$('backupBtn').onclick=$('exportBtn').onclick;
+
+/* Private photos: signed URLs for authenticated admins */
+window.showPhoto=async function(id){
+  const l=db.logs.find(x=>x.id===id);if(!l)return;
+  const e=findEmp(l.employeeId);
+  const url=await signedPhotoUrl(l.photo);
+  if(!url){toast('تعذر فتح الصورة');return}
+  $('bigPhoto').src=url;
+  $('bigMeta').innerHTML=`${esc(e?.name||'—')} — ${dateOf(l.ts)} ${timeOf(l.ts)}<br>${l.type==='in'?'حضور':'انصراف'}${l.note?'<br>ملاحظة: '+esc(l.note):''}`;
+  $('photoModal').classList.add('show');
+};
+
+async function renderLogs(){
+  if(!adminUnlocked)return;
+  const logs=filteredLogs();
+  const urls=await Promise.all(logs.map(l=>signedPhotoUrl(l.photo)));
+  $('logsBody').innerHTML=logs.map((l,i)=>{
+    const e=findEmp(l.employeeId);
+    const thumb=urls[i]?`<img class="thumb" src="${urls[i]}" onclick="showPhoto('${l.id}')">`:'—';
+    return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${thumb}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}">${l.type==='in'?'حضور':'انصراف'}</span></td><td>${l.late?'<span class="badge badge-late">متأخر</span>':l.early?'<span class="badge badge-late">انصراف مبكر</span>':'طبيعي'}</td><td><button class="btn btn-ghost btn-sm" onclick="showPhoto('${l.id}')">عرض</button></td></tr>`;
+  }).join('')||'<tr><td colspan="8" class="empty">لا توجد سجلات</td></tr>';
+  const ins=logs.filter(l=>l.type==='in'),outs=logs.filter(l=>l.type==='out');
+  $('printInBody').innerHTML=ins.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.start||'08:00')}</td><td>${l.late?'متأخر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات حضور</td></tr>';
+  $('printOutBody').innerHTML=outs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.end||'17:00')}</td><td>${l.early?'انصراف مبكر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات انصراف</td></tr>';
+  const m=`الفترة: ${$('fromDate').value||'—'} إلى ${$('toDate').value||'—'}`;
+  $('printCompanyIn').textContent=db.company+' — الحضور';
+  $('printCompanyOut').textContent=db.company+' — الانصراف';
+  $('printMetaIn').textContent=m;$('printMetaOut').textContent=m;
+}
+
+function renderHome(){ /* attendance-only */ }
+async function renderSettings(){
+  if(!adminUnlocked)return;
+  $('companyName').value=db.company||'نظام الحضور والانصراف';
+  $('grace').value=Number(db.grace??10);
+}
+async function renderAll(){
+  if(!adminUnlocked){renderHome();return}
+  renderSelectors();renderDepartmentFilter();renderEmployees();
+  await renderLogs();renderSummary();renderReportDepartmentButtons();renderSettings();
+}
+
+/* No local admin session; Supabase Auth controls access. */
+sb.auth.onAuthStateChange((_event,session)=>{
+  adminUnlocked=!!session;
+  if(!session){
+    clearCloudData();
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    $('home').classList.add('active');
+  }
+});
+(async function bootCloud(){
+  try{
+    const session=await cloudSession();
+    if(session){
+      await loadCloudAdmin();
+    }else{
+      adminUnlocked=false;clearCloudData();
+    }
+    renderAll();
+  }catch(err){
+    console.error(err);clearCloudData();renderHome();toast('تعذر الاتصال بـ Supabase');
+  }
+})();
+</script>
+</body>
+</html>
