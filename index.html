@@ -61,7 +61,22 @@ body{background:#fff}.app,main{padding:0;max-width:none}.card{box-shadow:none;bo
 }
 
 #reports.admin-locked{display:none!important}
-""</style>
+""
+/* Face verification additions */
+.face-modal-card{width:min(620px,100%);max-height:94vh;overflow:auto;background:#fff;color:#0f172a;border-radius:18px;padding:16px}
+.face-video-wrap{position:relative;background:#0f172a;border-radius:16px;overflow:hidden;margin-top:12px;min-height:280px;display:grid;place-items:center}
+.face-video{width:100%;max-height:62vh;display:block;background:#000;object-fit:cover;transform:scaleX(-1)}
+.face-guide{position:absolute;inset:10% 20%;border:2px dashed #fff8;border-radius:42%;pointer-events:none}
+.face-status{padding:11px 12px;border-radius:12px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-size:12px;line-height:1.8;margin-top:10px;text-align:center}
+.face-status.ok{background:#ecfdf5;color:#166534;border-color:#bbf7d0}
+.face-status.err{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+.face-status.warn{background:#fffbeb;color:#92400e;border-color:#fde68a}
+.face-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.face-ref{width:120px;height:120px;border-radius:14px;object-fit:cover;border:1px solid var(--line);background:#f8fafc}
+.face-badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800}
+.face-badge.ok{background:#dcfce7;color:#166534}.face-badge.no{background:#fee2e2;color:#991b1b}
+@media(max-width:720px){.face-guide{inset:13% 16%}.face-video-wrap{min-height:240px}}
+</style>
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -99,23 +114,23 @@ body{background:#fff}.app,main{padding:0;max-width:none}.card{box-shadow:none;bo
 <div class="actions" style="margin-top:10px"><button class="btn btn-blue" id="addEmployee">إضافة الموظف</button></div>
 </div>
 <div class="card"><div class="title-row"><h2>الموظفون</h2><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><select id="empDeptFilter" style="max-width:190px"><option value="">كل الأقسام</option></select><input id="empSearch" placeholder="بحث..." style="max-width:220px"></div></div>
-<div class="table-wrap"><table><thead><tr><th>الرقم</th><th>الموظف</th><th>القسم</th><th>بداية</th><th>نهاية</th><th>إجراءات</th></tr></thead><tbody id="employeesBody"></tbody></table></div></div>
+<div class="table-wrap"><table><thead><tr><th>الرقم</th><th>الموظف</th><th>القسم</th><th>بداية</th><th>نهاية</th><th>الوجه</th><th>إجراءات</th></tr></thead><tbody id="employeesBody"></tbody></table></div></div>
 </section>
 
 <section id="logs" class="page">
 <div class="card">
-<div class="title-row"><h2>سجل الحضور والانصراف</h2><div class="actions no-print"><button class="btn btn-primary btn-sm" id="printBtn">🖨️ طباعة</button><button class="btn btn-ghost btn-sm" id="backupBtn">💾 نسخة احتياطية</button></div></div>
+<div class="title-row"><h2>سجل الحضور والانصراف</h2><div class="actions no-print"><button class="btn btn-primary btn-sm" id="printBtn">🖨️ طباعة</button><button class="btn btn-ghost btn-sm" id="backupBtn">💾 نسخة احتياطية</button><button class="btn btn-red btn-sm" id="deleteFilteredLogsBtn">🗑️ حذف السجلات المعروضة</button></div></div>
 <div class="row3 no-print"><div><label>من</label><input id="fromDate" type="date"></div><div><label>إلى</label><input id="toDate" type="date"></div><div><label>الموظف</label><select id="logEmployee"><option value="">الكل</option></select></div></div>
 <div class="row no-print" style="margin-top:10px"><div><label>العملية</label><select id="logType"><option value="">الكل</option><option value="in">الحضور</option><option value="out">الانصراف</option></select></div><div><label>الحالة</label><select id="logStatus"><option value="">الكل</option><option value="late">متأخر</option><option value="early">انصراف مبكر</option><option value="normal">طبيعي</option></select></div></div>
 </div>
-<div class="card screen-report"><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الصورة</th><th>الموظف</th><th>القسم</th><th>العملية</th><th>الحالة</th><th>عرض</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
+<div class="card screen-report"><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الصورة</th><th>الموظف</th><th>القسم</th><th>العملية</th><th>الحالة</th><th>عرض</th><th>حذف</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
 
-<div class="print-only"><h2 id="printCompanyIn">تقرير الحضور</h2><div id="printMetaIn" class="print-meta"></div><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الموظف</th><th>القسم</th><th>بداية الدوام</th><th>الحالة</th></tr></thead><tbody id="printInBody"></tbody></table></div>
-<div class="print-only"><h2 id="printCompanyOut">تقرير الانصراف</h2><div id="printMetaOut" class="print-meta"></div><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الموظف</th><th>القسم</th><th>نهاية الدوام</th><th>الحالة</th></tr></thead><tbody id="printOutBody"></tbody></table></div>
+<div class="print-only"><h2 id="printCompanyIn">تقرير الحضور</h2><div id="printMetaIn" class="print-meta"></div><table><thead><tr><th>اليوم</th><th>التاريخ</th><th>الوقت</th><th>الموظف</th><th>القسم</th><th>بداية الدوام</th><th>الحالة</th></tr></thead><tbody id="printInBody"></tbody></table></div>
+<div class="print-only"><h2 id="printCompanyOut">تقرير الانصراف</h2><div id="printMetaOut" class="print-meta"></div><table><thead><tr><th>اليوم</th><th>التاريخ</th><th>الوقت</th><th>الموظف</th><th>القسم</th><th>نهاية الدوام</th><th>الحالة</th></tr></thead><tbody id="printOutBody"></tbody></table></div>
 </section>
 
 <section id="reports" class="page">
-<div class="card"><div class="title-row"><h2>ملخص الموظفين</h2><button class="btn btn-primary btn-sm no-print" onclick="window.print()">🖨️ طباعة</button></div>
+<div class="card"><div class="title-row"><h2>ملخص الموظفين</h2><button class="btn btn-primary btn-sm no-print" onclick="printAllReport()">🖨️ طباعة الكشف</button></div>
 <div class="no-print dept-print-box" style="margin-top:12px">
   <div style="font-weight:800;margin-bottom:8px">طباعة كل قسم لحاله</div>
   <div id="reportDepartmentButtons" class="dept-print-grid"></div>
@@ -160,9 +175,14 @@ let currentPhoto='';let adminUnlocked=false;let pendingAdminAction=null;
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,9);
-const today=()=>new Date().toISOString().slice(0,10);
-const dateOf=ts=>new Date(ts).toISOString().slice(0,10);
+const riyadhDateKey=ts=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ts));
+const today=()=>riyadhDateKey(new Date());
+const dateOf=ts=>riyadhDateKey(ts);
 const timeOf=ts=>new Date(ts).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const dayOf=ts=>new Date(ts).toLocaleDateString('ar-SA',{weekday:'long'});
+const dateArOf=ts=>new Date(ts).toLocaleDateString('ar-SA',{day:'2-digit',month:'2-digit',year:'numeric'});
+const dateGregorianOf=ts=>new Date(ts).toLocaleDateString('ar-SA-u-ca-gregory',{day:'2-digit',month:'2-digit',year:'numeric'});
+const printDateTime=ts=>`${dayOf(ts)}، ${dateArOf(ts)}، ${timeOf(ts)}`;
 const monthOf=ts=>dateOf(ts).slice(0,7);
 
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));return true}catch(e){toast('مساحة التخزين ممتلئة. صدّر نسخة احتياطية واحذف بيانات قديمة.');return false}}
@@ -334,8 +354,8 @@ function filteredLogs(){
 function renderLogs(){
  const logs=filteredLogs();$('logsBody').innerHTML=logs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td><img class="thumb" src="${l.photo}" onclick="showPhoto('${l.id}')"></td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}">${l.type==='in'?'حضور':'انصراف'}</span></td><td>${l.late?'<span class="badge badge-late">متأخر</span>':l.early?'<span class="badge badge-late">انصراف مبكر</span>':'طبيعي'}</td><td><button class="btn btn-ghost btn-sm" onclick="showPhoto('${l.id}')">عرض</button></td></tr>`}).join('')||'<tr><td colspan="8" class="empty">لا توجد سجلات</td></tr>';
  const ins=logs.filter(l=>l.type==='in'),outs=logs.filter(l=>l.type==='out');
- $('printInBody').innerHTML=ins.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.start||'08:00')}</td><td>${l.late?'متأخر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات حضور</td></tr>';
- $('printOutBody').innerHTML=outs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.end||'17:00')}</td><td>${l.early?'انصراف مبكر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات انصراف</td></tr>';
+ $('printInBody').innerHTML=ins.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dayOf(l.ts)}</td><td>${dateGregorianOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.start||'08:00')}</td><td>${l.late?'متأخر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center">لا توجد سجلات حضور</td></tr>';
+ $('printOutBody').innerHTML=outs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dayOf(l.ts)}</td><td>${dateGregorianOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.end||'17:00')}</td><td>${l.early?'انصراف مبكر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center">لا توجد سجلات انصراف</td></tr>';
  const m=`الفترة: ${$('fromDate').value||'—'} إلى ${$('toDate').value||'—'}`;$('printCompanyIn').textContent=db.company+' — الحضور';$('printCompanyOut').textContent=db.company+' — الانصراف';$('printMetaIn').textContent=m;$('printMetaOut').textContent=m
 }
 function renderDepartmentFilter(){
@@ -379,7 +399,7 @@ function absenceCountForEmployee(e,month){
  }
  return absent;
 }
-function renderSummary(){const month=$('monthFilter').value||new Date().toISOString().slice(0,7),id=$('summaryEmployee').value;const rows=db.employees.filter(e=>!id||e.id===id).map(e=>{const a=db.logs.filter(l=>l.employeeId===e.id&&monthOf(l.ts)===month),ins=a.filter(l=>l.type==='in'),outs=a.filter(l=>l.type==='out'),li=ins.slice().sort((x,y)=>y.ts.localeCompare(x.ts))[0],lo=outs.slice().sort((x,y)=>y.ts.localeCompare(x.ts))[0],absent=absenceCountForEmployee(e,month);return `<tr><td>${esc(e.name)}</td><td>${ins.length}</td><td>${outs.length}</td><td>${ins.filter(x=>x.late).length}</td><td>${absent}</td><td>${li?dateOf(li.ts)+' '+timeOf(li.ts):'—'}</td><td>${lo?dateOf(lo.ts)+' '+timeOf(lo.ts):'—'}</td></tr>`}).join('');$('summaryBody').innerHTML=rows||'<tr><td colspan="7" class="empty">لا توجد بيانات</td></tr>'}
+function renderSummary(){const month=$('monthFilter').value||new Date().toISOString().slice(0,7),id=$('summaryEmployee').value;const rows=db.employees.filter(e=>!id||e.id===id).map(e=>{const a=db.logs.filter(l=>l.employeeId===e.id&&monthOf(l.ts)===month),ins=a.filter(l=>l.type==='in'),outs=a.filter(l=>l.type==='out'),li=ins.slice().sort((x,y)=>y.ts.localeCompare(x.ts))[0],lo=outs.slice().sort((x,y)=>y.ts.localeCompare(x.ts))[0],absent=absenceCountForEmployee(e,month);return `<tr><td>${esc(e.name)}</td><td>${ins.length}</td><td>${outs.length}</td><td>${ins.filter(x=>x.late).length}</td><td>${absent}</td><td>${li?printDateTime(li.ts):'—'}</td><td>${lo?printDateTime(lo.ts):'—'}</td></tr>`}).join('');$('summaryBody').innerHTML=rows||'<tr><td colspan="7" class="empty">لا توجد بيانات</td></tr>'}
 
 function renderReportDepartmentButtons(){
   const host=$('reportDepartmentButtons');
@@ -390,49 +410,89 @@ function renderReportDepartmentButtons(){
     : '<div class="small">أضف الموظفين والأقسام أولًا</div>';
 }
 
+function printAllReport(){
+ const month=$('monthFilter').value||new Date().toISOString().slice(0,7);
+ const [y,m]=month.split('-').map(Number);
+ const daysInMonth=new Date(y,m,0).getDate();
+ const selectedId=$('summaryEmployee')?.value||'';
+ const employees=(db.employees||[]).filter(e=>!selectedId||String(e.id)===String(selectedId)).sort((a,b)=>String(a.dept||'').localeCompare(String(b.dept||''),'ar')||String(a.name||'').localeCompare(String(b.name||''),'ar'));
+ const rows=[];
+ employees.forEach(e=>{
+   const logs=db.logs.filter(l=>l.employeeId===e.id&&monthOf(l.ts)===month).sort((a,b)=>a.ts.localeCompare(b.ts));
+   for(let d=1;d<=daysInMonth;d++){
+     const dt=new Date(y,m-1,d), dateKey=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+     const dayLogs=logs.filter(l=>dateOf(l.ts)===dateKey);
+     const ins=dayLogs.filter(l=>l.type==='in').sort((a,b)=>a.ts.localeCompare(b.ts));
+     const outs=dayLogs.filter(l=>l.type==='out').sort((a,b)=>a.ts.localeCompare(b.ts));
+     const notes=dayLogs.map(l=>String(l.note||'').trim()).filter(Boolean);
+     const employeeLabel=e.code?`${e.name} / ${e.code}`:e.name;
+     rows.push(`<tr><td>${esc(employeeLabel)}</td><td>${dayOf(dt.toISOString())} — ${dateGregorianOf(dt.toISOString())}</td><td>${ins[0]?timeOf(ins[0].ts):''}</td><td>${outs[0]?timeOf(outs[0].ts):''}</td><td>${esc([...new Set(notes)].join(' — ')||'')}</td></tr>`);
+   }
+ });
+ const body=rows.join('')||'<tr><td colspan="5">لا توجد بيانات للموظف المحدد</td></tr>';
+ const company=db.company||'نظام الحضور والانصراف';
+ const html=`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>كشف الحضور والانصراف</title><style>@page{size:auto;margin:12mm}body{font-family:Arial,Tahoma,sans-serif;color:#111;margin:0}h1{text-align:center;font-size:24px;margin:0 0 8px}.meta{text-align:center;font-size:14px;margin-bottom:18px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #222;padding:7px 6px;text-align:center;font-size:11px}th{font-weight:800;background:#eee}.foot{text-align:center;margin-top:16px;font-size:11px;color:#555}</style></head><body><h1>${esc(company)}</h1><div class="meta">كشف الحضور والانصراف — ${selectedId&&employees[0]?`الموظف: ${esc(employees[0].name)} / ${esc(employees[0].code||'')}`:'جميع الموظفين'} — الشهر: ${esc(month)}</div><table><thead><tr><th>الاسم / الموظف</th><th>التاريخ واليوم</th><th>وقت الحضور</th><th>وقت الانصراف</th><th>ملاحظات</th></tr></thead><tbody>${body}</tbody></table><div class="foot">جميع أيام الشهر مدرجة، وتبقى خانات الوقت فارغة عند عدم وجود تسجيل.</div></body></html>`;
+ const w=window.open('','_blank','width=1100,height=750');
+ if(!w){toast('السماح بالنوافذ المنبثقة مطلوب للطباعة');return}
+ w.document.open();w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),350);
+}
+
 function printDepartmentReport(dept){
  const month=$('monthFilter').value||new Date().toISOString().slice(0,7);
- const employees=(db.employees||[]).filter(e=>(e.dept||'')===dept);
- const rows=employees.map(e=>{
-   const logs=db.logs.filter(l=>l.employeeId===e.id&&monthOf(l.ts)===month);
-   const ins=logs.filter(l=>l.type==='in');
-   const outs=logs.filter(l=>l.type==='out');
-   const li=ins.slice().sort((a,b)=>b.ts.localeCompare(a.ts))[0];
-   const lo=outs.slice().sort((a,b)=>b.ts.localeCompare(a.ts))[0];
-   const absent=absenceCountForEmployee(e,month);
-   return `<tr>
-     <td>${esc(e.name)}</td>
-     <td>${ins.length}</td>
-     <td>${outs.length}</td>
-     <td>${ins.filter(x=>x.late).length}</td>
-     <td>${absent}</td>
-     <td>${li?dateOf(li.ts)+' '+timeOf(li.ts):'—'}</td>
-     <td>${lo?dateOf(lo.ts)+' '+timeOf(lo.ts):'—'}</td>
-   </tr>`;
- }).join('')||'<tr><td colspan="7">لا توجد بيانات لهذا القسم</td></tr>';
-
+ const employees=(db.employees||[]).filter(e=>String(e.dept||'').trim()===String(dept||'').trim());
+ const [y,m]=month.split('-').map(Number);
+ const daysInMonth=new Date(y,m,0).getDate();
+ const rows=[];
+ 
+ employees.forEach(e=>{
+   const logs=db.logs
+     .filter(l=>l.employeeId===e.id&&monthOf(l.ts)===month)
+     .sort((a,b)=>a.ts.localeCompare(b.ts));
+   
+   for(let d=1;d<=daysInMonth;d++){
+     const dt=new Date(y,m-1,d);
+     // لا نستخدم toISOString هنا حتى لا يتحول تاريخ اليوم بسبب فرق التوقيت.
+     const dateKey=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+     const dayLogs=logs.filter(l=>dateOf(l.ts)===dateKey);
+     const ins=dayLogs.filter(l=>l.type==='in').sort((a,b)=>a.ts.localeCompare(b.ts));
+     const outs=dayLogs.filter(l=>l.type==='out').sort((a,b)=>a.ts.localeCompare(b.ts));
+     const notes=dayLogs.map(l=>String(l.note||'').trim()).filter(Boolean);
+     const inTime=ins[0]?timeOf(ins[0].ts):'';
+     const outTime=outs[0]?timeOf(outs[0].ts):'';
+     const employeeLabel=e.code?`${e.name} / ${e.code}`:e.name;
+     rows.push(`<tr>
+       <td>${esc(employeeLabel)}</td>
+       <td>${dt.toLocaleDateString('ar-SA',{weekday:'long'})} — ${dt.toLocaleDateString('ar-SA-u-ca-gregory',{day:'2-digit',month:'2-digit',year:'numeric'})}</td>
+       <td>${inTime}</td>
+       <td>${outTime}</td>
+       <td>${esc([...new Set(notes)].join(' — ')||'')}</td>
+     </tr>`);
+   }
+ });
+ 
+ const body=rows.join('')||'<tr><td colspan="5">لا يوجد موظفون في هذا القسم</td></tr>';
  const company=db.company||'نظام الحضور والانصراف';
  const html=`<!doctype html><html dir="rtl"><head><meta charset="utf-8">
- <title>تقرير قسم ${esc(dept)}</title>
+ <title>كشف قسم ${esc(dept)}</title>
  <style>
-  @page{size:auto;margin:15mm}
+  @page{size:auto;margin:12mm}
   body{font-family:Arial,Tahoma,sans-serif;color:#111;margin:0}
   h1{text-align:center;font-size:24px;margin:0 0 8px}
   h2{text-align:center;font-size:20px;margin:0 0 8px}
   .meta{text-align:center;font-size:14px;margin-bottom:18px}
   table{width:100%;border-collapse:collapse}
-  th,td{border:1px solid #222;padding:9px 7px;text-align:center;font-size:13px}
+  th,td{border:1px solid #222;padding:7px 6px;text-align:center;font-size:12px}
   th{font-weight:800;background:#eee}
   .foot{text-align:center;margin-top:16px;font-size:11px;color:#555}
  </style></head><body>
  <h1>${esc(company)}</h1>
  <h2>القسم: ${esc(dept)}</h2>
- <div class="meta">تقرير الحضور والانصراف — الشهر: ${esc(month)}</div>
+ <div class="meta">كشف الحضور والانصراف — الشهر: ${esc(month)}</div>
  <table>
-  <thead><tr><th>الموظف</th><th>الحضور</th><th>الانصراف</th><th>التأخير</th><th>الغياب</th><th>آخر حضور</th><th>آخر انصراف</th></tr></thead>
-  <tbody>${rows}</tbody>
+  <thead><tr><th>الاسم / الموظف</th><th>التاريخ واليوم</th><th>وقت الحضور</th><th>وقت الانصراف</th><th>ملاحظات</th></tr></thead>
+  <tbody>${body}</tbody>
  </table>
- <div class="foot">عدد الموظفين: ${employees.length} — أيام الغياب محسوبة لكل أيام الدوام من السبت إلى الخميس التي لا يوجد فيها تسجيل حضور، والجمعة فقط إجازة أسبوعية.</div>
+ <div class="foot">عدد الموظفين بالقسم: ${employees.length} — جميع أيام الشهر مدرجة، وتبقى خانات الوقت فارغة عند عدم وجود تسجيل.</div>
  </body></html>`;
 
  const w=window.open('','_blank','width=1000,height=750');
@@ -832,14 +892,41 @@ window.saveCloudEdit=async function(id){
 };
 window.deleteEmployee=function(id){
   showAdmin(async()=>{
-    if(!confirm('حذف الموظف؟ إذا كان لديه سجلات حضور لن يسمح النظام بحذفه.'))return;
-    const {error}=await sb.from('employees').delete().eq('id',id);
-    if(error){
-      console.error(error);
-      toast('تعذر حذف الموظف. إذا كان لديه سجلات حضور استخدم تعطيل الموظف.');
-      return;
+    const emp=findEmp(id);
+    if(!emp)return;
+    if(!confirm('سيتم حذف الموظف وجميع سجلات حضوره وانصرافه وصور هذه السجلات من Supabase نهائيًا. هل تريد المتابعة؟'))return;
+    try{
+      /* 1) احصل على مسارات الصور الخاصة بالموظف قبل حذف سجلات الحضور */
+      const {data:attRows,error:attReadError}=await sb.from('attendance')
+        .select('id,photo_url')
+        .eq('employee_id',id);
+      if(attReadError)throw attReadError;
+
+      const photoPaths=(attRows||[])
+        .map(r=>String(r.photo_url||'').trim())
+        .filter(p=>p && !/^data:image\//.test(p));
+
+      /* 2) احذف الصور من Storage */
+      if(photoPaths.length){
+        const {error:photoError}=await sb.storage.from(PHOTO_BUCKET).remove(photoPaths);
+        if(photoError)throw photoError;
+      }
+
+      /* 3) احذف سجلات الحضور والانصراف المرتبطة بالموظف */
+      const {error:attDeleteError}=await sb.from('attendance').delete().eq('employee_id',id);
+      if(attDeleteError)throw attDeleteError;
+
+      /* 4) احذف الموظف نفسه */
+      const {error:empDeleteError}=await sb.from('employees').delete().eq('id',id);
+      if(empDeleteError)throw empDeleteError;
+
+      await loadCloudAdmin();
+      toast('تم حذف الموظف وسجلاته وصوره نهائيًا');
+      renderAll();
+    }catch(error){
+      console.error('DELETE EMPLOYEE ERROR:',error);
+      toast('تعذر إكمال الحذف. تأكد من صلاحية حذف الصور والسجلات في Supabase.');
     }
-    await loadCloudAdmin();toast('تم الحذف');renderAll();
   });
 };
 
@@ -885,6 +972,54 @@ window.showPhoto=async function(id){
   $('photoModal').classList.add('show');
 };
 
+window.deleteAttendance=async function(id){
+  if(!adminUnlocked)return;
+  const l=db.logs.find(x=>String(x.id)===String(id));
+  if(!l){toast('السجل غير موجود');return}
+  const e=findEmp(l.employeeId);
+  if(!confirm(`حذف سجل ${l.type==='in'?'الحضور':'الانصراف'} للموظف ${e?.name||'—'} بتاريخ ${dateOf(l.ts)}؟\n\nسيتم حذف السجل والصورة من Supabase نهائيًا، ولن يتم حذف الموظف.`))return;
+  try{
+    const photoPath=String(l.photo||'').trim();
+    if(photoPath && !/^data:image\//.test(photoPath)){
+      const {error:photoError}=await sb.storage.from(PHOTO_BUCKET).remove([photoPath]);
+      if(photoError)throw photoError;
+    }
+    const {error:deleteError}=await sb.from('attendance').delete().eq('id',id);
+    if(deleteError)throw deleteError;
+    await loadCloudAdmin();
+    await renderAll();
+    toast('تم حذف السجل والصورة، والموظف ما زال موجودًا');
+  }catch(error){
+    console.error('DELETE ATTENDANCE ERROR:',error);
+    toast('تعذر حذف السجل. تأكد من صلاحيات حذف الصور والسجلات.');
+  }
+};
+
+$('deleteFilteredLogsBtn').onclick=async()=>{
+  if(!adminUnlocked)return;
+  const logs=filteredLogs();
+  if(!logs.length){toast('لا توجد سجلات مطابقة للحذف');return}
+  if(!confirm(`سيتم حذف ${logs.length} سجل حضور/انصراف مطابق للفلاتر الحالية، مع صورها من Supabase.\n\nالموظفون لن يتم حذفهم. هل تريد المتابعة؟`))return;
+  try{
+    const photoPaths=logs.map(l=>String(l.photo||'').trim()).filter(p=>p && !/^data:image\//.test(p));
+    if(photoPaths.length){
+      const {error:photoError}=await sb.storage.from(PHOTO_BUCKET).remove([...new Set(photoPaths)]);
+      if(photoError)throw photoError;
+    }
+    const ids=logs.map(l=>l.id).filter(Boolean);
+    for(const id of ids){
+      const {error:deleteError}=await sb.from('attendance').delete().eq('id',id);
+      if(deleteError)throw deleteError;
+    }
+    await loadCloudAdmin();
+    await renderAll();
+    toast(`تم حذف ${ids.length} سجل وصوره، والموظفون محفوظون`);
+  }catch(error){
+    console.error('DELETE FILTERED ATTENDANCE ERROR:',error);
+    toast('تعذر إكمال حذف السجلات. تأكد من صلاحيات Storage وقاعدة البيانات.');
+  }
+};
+
 async function renderLogs(){
   if(!adminUnlocked)return;
   const logs=filteredLogs();
@@ -892,11 +1027,11 @@ async function renderLogs(){
   $('logsBody').innerHTML=logs.map((l,i)=>{
     const e=findEmp(l.employeeId);
     const thumb=urls[i]?`<img class="thumb" src="${urls[i]}" onclick="showPhoto('${l.id}')">`:'—';
-    return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${thumb}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}">${l.type==='in'?'حضور':'انصراف'}</span></td><td>${l.late?'<span class="badge badge-late">متأخر</span>':l.early?'<span class="badge badge-late">انصراف مبكر</span>':'طبيعي'}</td><td><button class="btn btn-ghost btn-sm" onclick="showPhoto('${l.id}')">عرض</button></td></tr>`;
-  }).join('')||'<tr><td colspan="8" class="empty">لا توجد سجلات</td></tr>';
+    return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${thumb}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}">${l.type==='in'?'حضور':'انصراف'}</span></td><td>${l.late?'<span class="badge badge-late">متأخر</span>':l.early?'<span class="badge badge-late">انصراف مبكر</span>':'طبيعي'}</td><td><button class="btn btn-ghost btn-sm" onclick="showPhoto('${l.id}')">عرض</button></td><td><button class="btn btn-red btn-sm" onclick="deleteAttendance('${l.id}')">حذف</button></td></tr>`;
+  }).join('')||'<tr><td colspan="9" class="empty">لا توجد سجلات</td></tr>';
   const ins=logs.filter(l=>l.type==='in'),outs=logs.filter(l=>l.type==='out');
-  $('printInBody').innerHTML=ins.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.start||'08:00')}</td><td>${l.late?'متأخر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات حضور</td></tr>';
-  $('printOutBody').innerHTML=outs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dateOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.end||'17:00')}</td><td>${l.early?'انصراف مبكر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد سجلات انصراف</td></tr>';
+  $('printInBody').innerHTML=ins.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dayOf(l.ts)}</td><td>${dateGregorianOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.start||'08:00')}</td><td>${l.late?'متأخر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center">لا توجد سجلات حضور</td></tr>';
+  $('printOutBody').innerHTML=outs.map(l=>{const e=findEmp(l.employeeId);return `<tr><td>${dayOf(l.ts)}</td><td>${dateGregorianOf(l.ts)}</td><td>${timeOf(l.ts)}</td><td>${esc(e?.name||'—')}</td><td>${esc(e?.dept||'')}</td><td>${esc(e?.end||'17:00')}</td><td>${l.early?'انصراف مبكر':'طبيعي'}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center">لا توجد سجلات انصراف</td></tr>';
   const m=`الفترة: ${$('fromDate').value||'—'} إلى ${$('toDate').value||'—'}`;
   $('printCompanyIn').textContent=db.company+' — الحضور';
   $('printCompanyOut').textContent=db.company+' — الانصراف';
@@ -938,5 +1073,343 @@ sb.auth.onAuthStateChange((_event,session)=>{
   }
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+
+<div id="faceEnrollModal" class="modal">
+  <div class="face-modal-card">
+    <div class="modal-head"><h3 id="faceEnrollTitle">تسجيل صورة الوجه</h3><button class="btn btn-ghost btn-sm" onclick="closeFaceEnroll()">إغلاق</button></div>
+    <div class="small" style="margin-top:8px">اختر صورة واضحة لوجه الموظف من الكمبيوتر. لن تُحفظ الصورة المرجعية؛ الذي يُحفظ هو بصمة الوجه الرقمية اللازمة للمطابقة.</div>
+    <div style="display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px">
+      <img id="faceEnrollPreview" class="face-ref" alt="الصورة المرجعية">
+      <div style="min-width:220px;flex:1">
+        <label>الصورة المرجعية</label>
+        <input id="faceEnrollInput" type="file" accept="image/jpeg,image/png,image/webp">
+        <div id="faceEnrollStatus" class="face-status">اختر صورة لبدء التحليل.</div>
+      </div>
+    </div>
+    <div class="face-actions">
+      <button class="btn btn-green" id="saveFaceEnrollBtn" disabled>✅ حفظ بصمة الوجه</button>
+      <button class="btn btn-ghost" onclick="closeFaceEnroll()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div id="faceVerifyModal" class="modal">
+  <div class="face-modal-card">
+    <div class="modal-head"><h3>التحقق من الوجه</h3><button class="btn btn-ghost btn-sm" onclick="cancelFaceVerify()">إلغاء</button></div>
+    <div class="small" id="faceVerifyEmployeeLabel" style="margin-top:8px;text-align:center"></div>
+    <div class="face-video-wrap">
+      <video id="faceVerifyVideo" class="face-video" autoplay playsinline muted></video>
+      <div class="face-guide"></div>
+    </div>
+    <div id="faceVerifyStatus" class="face-status">جاري تجهيز الكاميرا...</div>
+    <div class="face-actions">
+      <button class="btn btn-blue" id="faceVerifyRetryBtn" style="display:none">🔄 إعادة المحاولة</button>
+      <button class="btn btn-ghost" onclick="cancelFaceVerify()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ==========================================================
+   Face verification layer
+   - Admin enrolls a face descriptor from a reference photo.
+   - Employee uses any phone camera.
+   - The descriptor is verified by Supabase RPC without exposing
+     the stored reference descriptor to the employee device.
+   ========================================================== */
+const FACE_MODEL_URL='https://cdn.jsdelivr.net/gh/vladmandic/face-api@1.7.12/model';
+const FACE_MATCH_THRESHOLD=0.52;
+let faceModelsReady=false,faceModelsPromise=null;
+let faceEnrollEmployeeId=null,faceEnrollDescriptor=null;
+let faceVerifyStream=null,faceVerifyTimer=null,faceVerifyCode='',faceVerifyEmp=null;
+let faceVerified=false,faceCameraFallback=false;
+let faceVerifyMotionStart=null,faceVerifyFirstNoseX=null;
+
+function faceMsg(el,msg,kind=''){
+  if(!el)return;
+  el.textContent=msg;
+  el.className='face-status'+(kind?' '+kind:'');
+}
+
+async function ensureFaceModels(){
+  if(faceModelsReady)return true;
+  if(faceModelsPromise)return faceModelsPromise;
+  if(typeof faceapi==='undefined')throw new Error('مكتبة التعرف على الوجه لم تُحمّل');
+  faceModelsPromise=(async()=>{
+    faceMsg($('faceEnrollStatus'),'جاري تحميل نظام التعرف على الوجه لأول مرة...','warn');
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URL)
+    ]);
+    faceModelsReady=true;
+    return true;
+  })().catch(err=>{faceModelsPromise=null;throw err});
+  return faceModelsPromise;
+}
+
+async function descriptorFromImageSource(source){
+  const options=new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:0.5});
+  const result=await faceapi.detectSingleFace(source,options).withFaceLandmarks().withFaceDescriptor();
+  if(!result)throw new Error('لم يتم العثور على وجه واضح في الصورة');
+  return result.descriptor;
+}
+
+async function verifyDescriptorWithServer(code,descriptor){
+  const arr=Array.from(descriptor||[]);
+  if(arr.length!==128)throw new Error('بيانات الوجه غير مكتملة');
+  const {data,error}=await sb.rpc('verify_employee_face',{p_employee_number:String(code),p_descriptor:arr});
+  if(error)throw error;
+  const row=Array.isArray(data)?data[0]:data;
+  return row||{matched:false,enrolled:false,distance:null};
+}
+
+function setFaceAttendanceButtonLabel(){
+  if($('photoBtn'))$('photoBtn').textContent=faceVerified?'✅ تم التحقق من الوجه':'🔐 تحقق من الوجه';
+}
+
+async function openFaceEnrollment(id){
+  const e=findEmp(id); if(!e)return;
+  if(!adminUnlocked){showAdmin(()=>openFaceEnrollment(id));return}
+  await ensureFaceModels().catch(err=>{console.error(err);toast('تعذر تحميل نظام التعرف على الوجه');});
+  faceEnrollEmployeeId=id;faceEnrollDescriptor=null;
+  $('faceEnrollTitle').textContent=`تسجيل وجه الموظف — ${e.name}`;
+  $('faceEnrollInput').value='';
+  $('faceEnrollPreview').removeAttribute('src');
+  $('faceEnrollPreview').alt=e.name;
+  $('saveFaceEnrollBtn').disabled=true;
+  faceMsg($('faceEnrollStatus'),'اختر صورة واضحة لوجه الموظف من الكمبيوتر.');
+  $('faceEnrollModal').classList.add('show');
+}
+window.openFaceEnrollment=openFaceEnrollment;
+window.closeFaceEnroll=function(){faceEnrollEmployeeId=null;faceEnrollDescriptor=null;$('faceEnrollModal').classList.remove('show')};
+
+$('faceEnrollInput').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)){toast('اختر صورة JPG أو PNG أو WEBP');return}
+  try{
+    faceMsg($('faceEnrollStatus'),'جاري تحليل الوجه...','warn');
+    await ensureFaceModels();
+    const url=URL.createObjectURL(file);
+    $('faceEnrollPreview').src=url;
+    const img=new Image();
+    img.onload=async()=>{
+      try{
+        faceEnrollDescriptor=await descriptorFromImageSource(img);
+        URL.revokeObjectURL(url);
+        $('saveFaceEnrollBtn').disabled=false;
+        faceMsg($('faceEnrollStatus'),'تم التعرف على وجه واحد بنجاح. اضغط حفظ.','ok');
+      }catch(err){
+        URL.revokeObjectURL(url);faceEnrollDescriptor=null;$('saveFaceEnrollBtn').disabled=true;
+        faceMsg($('faceEnrollStatus'),err.message||'تعذر استخراج بصمة الوجه. اختر صورة أوضح.','err');
+      }
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);faceEnrollDescriptor=null;faceMsg($('faceEnrollStatus'),'تعذر قراءة الصورة.','err')};
+    img.src=url;
+  }catch(err){console.error(err);faceEnrollDescriptor=null;$('saveFaceEnrollBtn').disabled=true;faceMsg($('faceEnrollStatus'),'تعذر تحميل نظام التعرف على الوجه. تأكد من اتصال الإنترنت.','err')}
+});
+
+$('saveFaceEnrollBtn').onclick=async()=>{
+  if(!faceEnrollEmployeeId||!faceEnrollDescriptor)return;
+  if(!adminUnlocked){toast('يجب دخول المسؤول');return}
+  $('saveFaceEnrollBtn').disabled=true;
+  faceMsg($('faceEnrollStatus'),'جاري حفظ بصمة الوجه...','warn');
+  try{
+    const {error}=await sb.from('employee_face_profiles').upsert({
+      employee_id:faceEnrollEmployeeId,
+      descriptor:Array.from(faceEnrollDescriptor),
+      updated_at:new Date().toISOString()
+    },{onConflict:'employee_id'});
+    if(error)throw error;
+    faceMsg($('faceEnrollStatus'),'تم حفظ بصمة الوجه بنجاح.','ok');
+    toast('تم تسجيل وجه الموظف');
+    setTimeout(()=>{closeFaceEnroll();renderEmployees();},500);
+  }catch(err){console.error(err);console.error('FACE ENROLL ERROR',err);faceMsg($('faceEnrollStatus'),'تعذر حفظ بصمة الوجه. تأكد من تنفيذ ملف إعداد Supabase المرفق.','err');$('saveFaceEnrollBtn').disabled=false}
+};
+
+async function loadFaceStatusMap(){
+  const map=new Map();
+  const {data,error}=await sb.from('employee_face_profiles').select('employee_id,updated_at');
+  if(error){
+    if(String(error.message||'').includes('employee_face_profiles'))return map;
+    console.error(error);return map;
+  }
+  (data||[]).forEach(r=>map.set(String(r.employee_id),r));
+  return map;
+}
+
+renderEmployees=async function(){
+  const host=$('employeesBody');if(!host)return;
+  const q=($('empSearch').value||'').trim().toLowerCase();
+  const dept=$('empDeptFilter')?.value||'';
+  let faceMap=new Map();
+  if(adminUnlocked)faceMap=await loadFaceStatusMap();
+  const list=(db.employees||[]).filter(e=>{
+    const matchesSearch=!q||String(e.name||'').toLowerCase().includes(q)||String(e.code||'').toLowerCase().includes(q)||String(e.dept||'').toLowerCase().includes(q);
+    const matchesDept=!dept||(e.dept||'')===dept;
+    return matchesSearch&&matchesDept;
+  });
+  host.innerHTML=list.map(e=>{
+    const enrolled=faceMap.has(String(e.id));
+    return `<tr>
+      <td>${esc(e.code)}</td><td>${esc(e.name)}</td><td>${esc(e.dept)}</td><td>${esc(e.start)}</td><td>${esc(e.end)}</td>
+      <td>${enrolled?'<span class="face-badge ok">✅ مسجل</span>':'<span class="face-badge no">⚠️ غير مسجل</span>'}</td>
+      <td><button class="btn btn-blue btn-sm" onclick="openFaceEnrollment('${e.id}')">👤 ${enrolled?'تحديث الوجه':'تسجيل الوجه'}</button> <button class="btn btn-ghost btn-sm" onclick="editEmployee('${e.id}')">تعديل</button> <button class="btn btn-red btn-sm" onclick="deleteEmployee('${e.id}')">حذف</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">لا يوجد موظفون</td></tr>';
+};
+
+async function resetFaceAttendance(){
+  faceVerified=false;faceVerifyCode='';faceVerifyEmp=null;currentPhoto='';
+  if($('photoPreview'))$('photoPreview').style.display='none';
+  if($('photoPlaceholder'))$('photoPlaceholder').style.display='block';
+  if($('saveBtn'))$('saveBtn').disabled=true;
+  setFaceAttendanceButtonLabel();
+}
+
+function stopFaceStream(){
+  if(faceVerifyTimer){clearTimeout(faceVerifyTimer);faceVerifyTimer=null}
+  if(faceVerifyStream){faceVerifyStream.getTracks().forEach(t=>t.stop());faceVerifyStream=null}
+  if($('faceVerifyVideo'))$('faceVerifyVideo').srcObject=null;
+}
+
+window.cancelFaceVerify=function(){stopFaceStream();$('faceVerifyModal').classList.remove('show');faceVerifyMotionStart=null;faceVerifyFirstNoseX=null};
+
+async function fallbackFaceCapture(){
+  faceCameraFallback=true;
+  faceMsg($('faceVerifyStatus'),'الكاميرا المباشرة غير متاحة هنا. افتح كاميرا الجوال والتقط صورة مباشرة للتحقق.','warn');
+  $('faceVerifyModal').classList.remove('show');
+  $('cameraInput').click();
+}
+
+async function processFacePhotoData(dataUrl,source){
+  try{
+    await ensureFaceModels();
+    let descriptor;
+    if(source){descriptor=await descriptorFromImageSource(source)}
+    else{
+      const img=new Image();
+      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=dataUrl});
+      descriptor=await descriptorFromImageSource(img);
+    }
+    const result=await verifyDescriptorWithServer(faceVerifyCode,descriptor);
+    if(!result.enrolled){
+      faceVerified=false;toast('لم يتم تسجيل بصمة وجه لهذا الموظف.');return false;
+    }
+    if(!result.matched){
+      faceVerified=false;toast(`❌ الوجه غير مطابق للموظف — نسبة المطابقة غير كافية`);return false;
+    }
+    faceVerified=true;
+    currentPhoto=dataUrl;
+    $('photoPreview').src=currentPhoto;$('photoPreview').style.display='block';$('photoPlaceholder').style.display='none';
+    $('saveBtn').disabled=false;
+    $('attStatus').textContent='✅ تم التحقق من الوجه. يمكنك الآن تسجيل العملية.';
+    setFaceAttendanceButtonLabel();
+    return true;
+  }catch(err){
+    console.error(err);toast(err.message||'تعذر التحقق من الوجه');return false;
+  }
+}
+
+async function captureFromVideoAndVerify(){
+  const v=$('faceVerifyVideo');
+  const c=document.createElement('canvas');c.width=v.videoWidth||640;c.height=v.videoHeight||480;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  const data=c.toDataURL('image/jpeg',0.86);
+  const ok=await processFacePhotoData(data,c);
+  if(ok){faceMsg($('faceVerifyStatus'),'✅ تم التحقق من الوجه بنجاح.','ok');setTimeout(()=>cancelFaceVerify(),600)}
+  else{faceMsg($('faceVerifyStatus'),'❌ الوجه غير مطابق. حاول مرة أخرى.','err');$('faceVerifyRetryBtn').style.display='inline-block'}
+}
+
+async function faceVerifyLoop(){
+  if(!$('faceVerifyModal').classList.contains('show'))return;
+  const v=$('faceVerifyVideo');
+  try{
+    const det=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:0.5})).withFaceLandmarks().withFaceDescriptor();
+    if(!det){faceMsg($('faceVerifyStatus'),'ضع وجهك داخل الإطار وانظر للكاميرا.');faceVerifyTimer=setTimeout(faceVerifyLoop,350);return}
+    const box=det.detection.box;const lm=det.landmarks.positions;
+    const nose=lm[30]||lm[Math.floor(lm.length/2)];
+    const nx=(nose.x-box.x)/Math.max(box.width,1);
+    if(faceVerifyFirstNoseX===null){faceVerifyFirstNoseX=nx;faceVerifyMotionStart=Date.now();faceMsg($('faceVerifyStatus'),'ممتاز. حرّك رأسك قليلًا يمينًا ثم يسارًا للتحقق من أنك أمام الكاميرا.','warn');faceVerifyTimer=setTimeout(faceVerifyLoop,250);return}
+    const moved=Math.abs(nx-faceVerifyFirstNoseX)>0.055;
+    const elapsed=Date.now()-(faceVerifyMotionStart||Date.now());
+    if(!moved && elapsed<4500){faceMsg($('faceVerifyStatus'),'حرّك رأسك قليلًا يمينًا ثم يسارًا...','warn');faceVerifyTimer=setTimeout(faceVerifyLoop,250);return}
+    if(!moved){faceMsg($('faceVerifyStatus'),'لم يتم رصد حركة كافية. حاول مرة أخرى.','err');$('faceVerifyRetryBtn').style.display='inline-block';return}
+    await captureFromVideoAndVerify();
+  }catch(err){console.error(err);faceVerifyTimer=setTimeout(faceVerifyLoop,500)}
+}
+
+async function startFaceVerify(){
+  const code=$('attCode').value.trim();
+  if(!code){toast('أدخل الرقم الوظيفي أولًا');return}
+  const emp=await lookupCloudEmployee(code);
+  if(!emp){toast('الرقم الوظيفي غير موجود');return}
+  faceVerifyCode=code;faceVerifyEmp=emp;faceVerified=false;currentPhoto='';
+  $('saveBtn').disabled=true;setFaceAttendanceButtonLabel();
+  $('faceVerifyEmployeeLabel').textContent=`الموظف: ${emp.name} — رقم ${emp.code}`;
+  $('faceVerifyRetryBtn').style.display='none';
+  faceVerifyFirstNoseX=null;faceVerifyMotionStart=null;
+  $('faceVerifyModal').classList.add('show');
+  try{
+    await ensureFaceModels();
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error('getUserMedia unavailable');
+    faceVerifyStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    $('faceVerifyVideo').srcObject=faceVerifyStream;
+    await $('faceVerifyVideo').play();
+    faceCameraFallback=false;
+    faceMsg($('faceVerifyStatus'),'ضع وجهك داخل الإطار...','warn');
+    faceVerifyTimer=setTimeout(faceVerifyLoop,700);
+  }catch(err){console.warn('LIVE CAMERA FALLBACK',err);await fallbackFaceCapture()}
+}
+
+$('faceVerifyRetryBtn').onclick=async()=>{
+  $('faceVerifyRetryBtn').style.display='none';
+  faceVerifyFirstNoseX=null;faceVerifyMotionStart=null;
+  if(faceVerifyStream){faceMsg($('faceVerifyStatus'),'حاول مرة أخرى...','warn');faceVerifyTimer=setTimeout(faceVerifyLoop,300)}else{await startFaceVerify()}
+};
+
+$('photoBtn').onclick=()=>startFaceVerify();
+$('attCode').addEventListener('input',()=>{faceVerified=false;currentPhoto='';$('saveBtn').disabled=true;setFaceAttendanceButtonLabel()});
+
+/* Replace camera fallback handler so a captured camera photo is still face-verified. */
+$('cameraInput').onchange=async e=>{
+  const f=e.target.files?.[0];if(!f)return;
+  try{
+    currentPhoto=await resizeDataUrl(f);
+    $('photoPreview').src=currentPhoto;$('photoPreview').style.display='block';$('photoPlaceholder').style.display='none';
+    $('attStatus').textContent='جاري التحقق من الوجه...';
+    await ensureFaceModels();
+    const img=new Image();
+    await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=currentPhoto});
+    const desc=await descriptorFromImageSource(img);
+    const code=$('attCode').value.trim();
+    const result=await verifyDescriptorWithServer(code,desc);
+    if(!result.enrolled||!result.matched){
+      faceVerified=false;$('saveBtn').disabled=true;$('attStatus').textContent='❌ الوجه غير مطابق للموظف.';toast('تم رفض العملية: الوجه غير مطابق');return;
+    }
+    faceVerified=true;$('saveBtn').disabled=false;$('attStatus').textContent='✅ تم التحقق من الوجه. يمكنك تسجيل العملية.';setFaceAttendanceButtonLabel();
+  }catch(err){console.error(err);faceVerified=false;$('saveBtn').disabled=true;$('attStatus').textContent='تعذر التحقق من الوجه';toast(err.message||'تعذر التحقق من الوجه')}
+  finally{$('cameraInput').value=''}
+};
+
+/* Gate the final save with successful face verification. */
+const originalCloudSaveAttendance=$('saveBtn').onclick;
+$('saveBtn').onclick=async()=>{
+  if(!faceVerified){toast('يجب التحقق من الوجه أولًا');return}
+  await originalCloudSaveAttendance();
+  await resetFaceAttendance();
+};
+
+/* Add a visible face status to the attendance screen. */
+const faceNotice=document.createElement('div');
+faceNotice.id='faceProtectionNotice';faceNotice.className='notice info';
+faceNotice.textContent='🔐 الحضور والانصراف محميان بمطابقة وجه الموظف. يمكن استخدام أي جوال يدعم الكاميرا.';
+const photoBtnParent=$('photoBtn')?.parentElement?.parentElement;
+if(photoBtnParent && !document.getElementById('faceProtectionNotice'))photoBtnParent.appendChild(faceNotice);
+setFaceAttendanceButtonLabel();
+</script>
+
 </body>
 </html>
