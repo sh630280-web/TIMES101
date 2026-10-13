@@ -961,8 +961,14 @@ window.deleteEmployee=function(id){
 
 function getGpsPosition(){
  return new Promise((resolve,reject)=>{
-  if(!navigator.geolocation)return reject(new Error('هذا المتصفح لا يدعم تحديد الموقع'));
-  navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+  if(!navigator.geolocation)return reject(new Error('هذا المتصفح لا يدعم تحديد الموقع.'));
+  navigator.geolocation.getCurrentPosition(resolve,error=>{
+   let message='تعذر تحديد الموقع.';
+   if(error?.code===1) message='تم رفض إذن الموقع. افتح إعدادات الموقع للمتصفح واسمح بالوصول إلى الموقع الدقيق ثم أعد المحاولة.';
+   else if(error?.code===2) message='الجوال لم يتمكن من تحديد الموقع. فعّل GPS/الموقع الدقيق وجرّب في مكان مفتوح.';
+   else if(error?.code===3) message='انتهت مهلة تحديد الموقع. فعّل GPS وانتظر قليلًا ثم أعد المحاولة.';
+   reject(new Error(message));
+  },{enableHighAccuracy:true,timeout:30000,maximumAge:0});
  });
 }
 function distanceMeters(lat1,lon1,lat2,lon2){
@@ -971,15 +977,30 @@ function distanceMeters(lat1,lon1,lat2,lon2){
  return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 $('captureWorkplaceBtn').onclick=()=>showAdmin(async()=>{
+ const btn=$('captureWorkplaceBtn');btn.disabled=true;
  try{
-  $('workplaceStatus').textContent='جارٍ تحديد موقع مقر العمل...';
+  $('workplaceStatus').textContent='جارٍ تحديد موقع مقر العمل بدقة...';
+  if(!window.isSecureContext && location.hostname!=='localhost') throw new Error('المتصفح يمنع GPS لأن صفحة النظام ليست عبر HTTPS. افتح رابط النظام الآمن HTTPS.');
   const pos=await getGpsPosition();
-  if(!Number.isFinite(pos.coords.latitude)||!Number.isFinite(pos.coords.longitude)||pos.coords.accuracy>100){
-   $('workplaceStatus').textContent='دقة الموقع ضعيفة. فعّل الموقع الدقيق وجرّب مرة أخرى.';toast('تعذر اعتماد الموقع بسبب ضعف الدقة');return;
-  }
-  $('workplaceLat').value=pos.coords.latitude.toFixed(7);$('workplaceLng').value=pos.coords.longitude.toFixed(7);
-  $('workplaceStatus').textContent='تم التقاط الإحداثيات. اضغط «حفظ» لحفظ موقع العمل في Supabase.';
- }catch(e){$('workplaceStatus').textContent='تعذر تحديد الموقع. اسمح للمتصفح بالوصول إلى الموقع.';toast(e.message||'تعذر تحديد الموقع');}
+  const lat=Number(pos?.coords?.latitude),lng=Number(pos?.coords?.longitude),accuracy=Number(pos?.coords?.accuracy);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)) throw new Error('لم يسترجع الجوال إحداثيات صحيحة.');
+  if(!Number.isFinite(accuracy)||accuracy>100) throw new Error('دقة الموقع الحالية '+(Number.isFinite(accuracy)?Math.round(accuracy)+' متر':'غير معروفة')+'؛ فعّل الموقع الدقيق وجرّب من مكان مفتوح.');
+  $('workplaceLat').value=lat.toFixed(7);$('workplaceLng').value=lng.toFixed(7);
+  $('workplaceStatus').textContent='تم تحديد الموقع بدقة '+Math.round(accuracy)+' متر. جارٍ حفظه واعتماده في قاعدة البيانات...';
+  const company=$('companyName').value.trim()||db.company||'نظام الحضور والانصراف';
+  const grace=Math.max(0,Math.min(120,Number($('grace').value??db.grace??10)||0));
+  const payload={id:1,company_name:company,late_allowed_minutes:grace,work_start_time:'08:00',work_end_time:'17:00',workplace_lat:lat,workplace_lng:lng,workplace_radius_m:200,updated_at:new Date().toISOString()};
+  const {error:saveError}=await sb.from('system_settings').upsert(payload,{onConflict:'id'});
+  if(saveError){console.error('SAVE WORKPLACE LOCATION:',saveError);throw new Error('تم تحديد الموقع لكن تعذر حفظه في Supabase: '+(saveError.message||saveError.code||'تحقق من صلاحيات جدول system_settings'));}
+  const {data:verified,error:verifyError}=await sb.from('system_settings').select('workplace_lat,workplace_lng,workplace_radius_m').eq('id',1).maybeSingle();
+  if(verifyError) throw new Error('أُرسل الحفظ لكن تعذر التأكد من اعتماده: '+(verifyError.message||verifyError.code||'خطأ قراءة'));
+  if(!verified||verified.workplace_lat==null||verified.workplace_lng==null||Math.abs(Number(verified.workplace_lat)-lat)>0.0000002||Math.abs(Number(verified.workplace_lng)-lng)>0.0000002) throw new Error('قاعدة البيانات لم تُرجع الإحداثيات المحفوظة. راجع صلاحيات القراءة والكتابة لجدول system_settings.');
+  db.company=company;db.grace=grace;
+  $('workplaceLat').value=Number(verified.workplace_lat).toFixed(7);$('workplaceLng').value=Number(verified.workplace_lng).toFixed(7);
+  $('workplaceStatus').textContent='تم اعتماد موقع مقر العمل وحفظه في Supabase بنجاح. نطاق السماح 200 متر. يمكنك الآن تسجيل الحضور والانصراف من داخل النطاق.';
+  toast('تم اعتماد موقع مقر العمل بنجاح');
+ }catch(e){console.error('WORKPLACE LOCATION ERROR:',e);$('workplaceStatus').textContent=e.message||'تعذر تحديد موقع مقر العمل أو اعتماده.';toast(e.message||'تعذر تحديد الموقع');}
+ finally{btn.disabled=false;}
 });
 
 $('saveSettings').onclick=()=>showAdmin(async()=>{
