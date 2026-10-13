@@ -80,13 +80,13 @@ body{background:#fff}.app,main{padding:0;max-width:none}.card{box-shadow:none;bo
 </head>
 <body>
 <div id="toast" class="toast"></div>
-<header><div class="head"><div><div id="companyTitle" class="brand">نظام الحضور والانصراف</div><div class="sub">نظام محلي — البيانات محفوظة على هذا الجهاز</div></div><div id="clock" class="clock">--:--:--</div></div></header>
+<header><div class="head"><div><div id="companyTitle" class="brand">نظام الحضور والانصراف</div><div class="sub">نظام حضور متصل — سجلات الموظفين والصور محفوظة في Supabase</div></div><div id="clock" class="clock">--:--:--</div></div></header>
 
 <main>
 <section id="home" class="page active">
 <div class="card hero">
 <h1>تسجيل الحضور والانصراف</h1>
-<p>لا يتم تسجيل أي عملية إلا بعد إدخال الرقم الوظيفي والتعرف على الموظف والتقاط صورة حديثة.</p>
+<p>لا يتم تسجيل أي عملية إلا بعد مطابقة الوجه والتحقق من وجود الموظف داخل نطاق 200 متر من مقر العمل.</p>
 <div class="row" style="text-align:right">
 <div><label>الرقم الوظيفي</label><input id="attCode" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="اكتب الرقم الوظيفي"></div>
 <div><label>اسم الموظف</label><input id="attEmployeeName" readonly placeholder="سيظهر الاسم تلقائيًا"></div>
@@ -150,6 +150,13 @@ body{background:#fff}.app,main{padding:0;max-width:none}.card{box-shadow:none;bo
 <section id="settings" class="page">
 <div class="card"><div class="title-row"><h2>إعدادات المسؤول</h2><button class="btn btn-ghost btn-sm" id="lockBtn">🔒 قفل</button></div>
 <div class="row"><div><label>اسم المنشأة</label><input id="companyName"></div><div><label>سماح التأخير بالدقائق</label><input id="grace" type="number" min="0" max="120" value="10"></div></div>
+<div class="card" style="margin-top:12px;background:#f8fafc;box-shadow:none">
+ <div class="title-row"><h2>موقع العمل الإلزامي</h2><span class="badge badge-ok">نطاق 200 متر</span></div>
+ <div class="small">قف في مقر العمل ثم اضغط «تحديد موقع مقر العمل». يجب حفظ الإحداثيات مرة واحدة من حساب المسؤول. لا يمكن تسجيل الحضور أو الانصراف إذا لم يتم إعداد الموقع أو تعذر التحقق من GPS.</div>
+ <div class="row" style="margin-top:10px"><div><label>خط العرض</label><input id="workplaceLat" readonly placeholder="لم يتم تحديد الموقع"></div><div><label>خط الطول</label><input id="workplaceLng" readonly placeholder="لم يتم تحديد الموقع"></div></div>
+ <div class="actions" style="margin-top:10px"><button class="btn btn-blue" id="captureWorkplaceBtn" type="button">📍 تحديد موقع مقر العمل الحالي</button></div>
+ <div id="workplaceStatus" class="status"></div>
+</div>
 <div class="actions" style="margin-top:10px"><button class="btn btn-primary" id="saveSettings">حفظ</button><button class="btn btn-ghost" id="exportBtn">تصدير نسخة</button><label class="btn btn-ghost">استيراد نسخة<input id="importInput" type="file" accept=".json" style="display:none"></label><button class="btn btn-red" id="wipeBtn">حذف كل البيانات</button></div>
 <div class="notice info">هذا النظام محلي ولا يحتاج سيرفر. احفظ نسخة احتياطية دورية؛ الصور جزء من النسخة الاحتياطية.</div>
 </div>
@@ -568,13 +575,13 @@ async function cloudSession(){
   return session||null;
 }
 async function ensureSystemSettings(){
-  let {data,error}=await sb.from('system_settings').select('id,company_name,late_allowed_minutes,work_start_time,work_end_time').eq('id',1).maybeSingle();
+  let {data,error}=await sb.from('system_settings').select('id,company_name,late_allowed_minutes,work_start_time,work_end_time,workplace_lat,workplace_lng,workplace_radius_m').eq('id',1).maybeSingle();
   if(error){console.error(error);return null}
   if(!data){
     const ins=await sb.from('system_settings').insert({
       id:1,company_name:'نظام الحضور والانصراف',late_allowed_minutes:10,
       work_start_time:'08:00',work_end_time:'17:00'
-    }).select('id,company_name,late_allowed_minutes,work_start_time,work_end_time').single();
+    }).select('id,company_name,late_allowed_minutes,work_start_time,work_end_time,workplace_lat,workplace_lng,workplace_radius_m').single();
     if(ins.error){console.error(ins.error);return null}
     data=ins.data;
   }
@@ -601,7 +608,7 @@ async function loadCloudAdmin(){
     sb.from('employees').select('id,employee_number,full_name,department_id,is_active,created_at').order('employee_number',{ascending:true}),
     sb.from('departments').select('id,name').order('name',{ascending:true}),
     sb.from('attendance').select('id,employee_id,attendance_type,attendance_time,photo_url,note,created_at').order('attendance_time',{ascending:false}),
-    sb.from('system_settings').select('id,company_name,late_allowed_minutes,work_start_time,work_end_time').eq('id',1).maybeSingle()
+    sb.from('system_settings').select('id,company_name,late_allowed_minutes,work_start_time,work_end_time,workplace_lat,workplace_lng,workplace_radius_m').eq('id',1).maybeSingle()
   ]);
 
   const failed=[];
@@ -623,6 +630,9 @@ async function loadCloudAdmin(){
   const end=settings?.work_end_time||'17:00';
   db.company=settings?.company_name||'نظام الحضور والانصراف';
   db.grace=Number(settings?.late_allowed_minutes??10);
+  if($('workplaceLat')) $('workplaceLat').value=settings?.workplace_lat??'';
+  if($('workplaceLng')) $('workplaceLng').value=settings?.workplace_lng??'';
+  if($('workplaceStatus')) $('workplaceStatus').textContent=(settings?.workplace_lat!=null&&settings?.workplace_lng!=null)?'تم إعداد موقع العمل على قاعدة البيانات.':'لم يتم إعداد موقع العمل بعد؛ التسجيل موقوف حتى إعداده.';
 
   db.employees=(er.data||[]).map(r=>mapCloudEmployee({
     ...r,
@@ -733,6 +743,25 @@ $('saveBtn').onclick=async()=>{
 
   const emp=await lookupCloudEmployee(code);
   if(!emp){toast('الرقم الوظيفي غير موجود');return}
+
+  // إلزام التحقق من موقع العمل قبل رفع الصورة أو استدعاء إجراء التسجيل.
+  try{
+    const {data:site,error:siteError}=await sb.from('system_settings')
+      .select('workplace_lat,workplace_lng,workplace_radius_m').eq('id',1).maybeSingle();
+    if(siteError)throw new Error('تعذر التحقق من إعدادات موقع العمل');
+    if(site?.workplace_lat==null||site?.workplace_lng==null)throw new Error('لم يتم إعداد موقع العمل من حساب المسؤول؛ التسجيل موقوف');
+    const pos=await getGpsPosition();
+    if(!Number.isFinite(pos.coords.latitude)||!Number.isFinite(pos.coords.longitude))throw new Error('تعذر قراءة إحداثيات الموقع');
+    if(pos.coords.accuracy>100)throw new Error('دقة GPS ضعيفة. فعّل الموقع الدقيق وحاول مجددًا');
+    const meters=distanceMeters(Number(site.workplace_lat),Number(site.workplace_lng),pos.coords.latitude,pos.coords.longitude);
+    const radius=Number(site.workplace_radius_m)||200;
+    if(meters>radius)throw new Error(`تم رفض التسجيل: أنت خارج نطاق مقر العمل (${Math.round(meters)} متر، المسموح ${radius} متر)`);
+    $('attStatus').textContent=`تم التحقق من موقع العمل (${Math.round(meters)} متر). جارٍ التسجيل...`;
+  }catch(locationErr){
+    console.warn('LOCATION CHECK FAILED:',locationErr);
+    $('attStatus').textContent=locationErr.message||'تعذر التحقق من موقع العمل';
+    $('saveBtn').disabled=false;toast(locationErr.message||'تعذر التحقق من الموقع');return;
+  }
 
   $('saveBtn').disabled=true;
   $('attStatus').textContent='جاري رفع الصورة وتسجيل العملية...';
@@ -930,12 +959,35 @@ window.deleteEmployee=function(id){
   });
 };
 
+function getGpsPosition(){
+ return new Promise((resolve,reject)=>{
+  if(!navigator.geolocation)return reject(new Error('هذا المتصفح لا يدعم تحديد الموقع'));
+  navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+ });
+}
+function distanceMeters(lat1,lon1,lat2,lon2){
+ const R=6371000,rad=x=>x*Math.PI/180,dLat=rad(lat2-lat1),dLon=rad(lon2-lon1);
+ const a=Math.sin(dLat/2)**2+Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
+ return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+$('captureWorkplaceBtn').onclick=()=>showAdmin(async()=>{
+ try{
+  $('workplaceStatus').textContent='جارٍ تحديد موقع مقر العمل...';
+  const pos=await getGpsPosition();
+  if(!Number.isFinite(pos.coords.latitude)||!Number.isFinite(pos.coords.longitude)||pos.coords.accuracy>100){
+   $('workplaceStatus').textContent='دقة الموقع ضعيفة. فعّل الموقع الدقيق وجرّب مرة أخرى.';toast('تعذر اعتماد الموقع بسبب ضعف الدقة');return;
+  }
+  $('workplaceLat').value=pos.coords.latitude.toFixed(7);$('workplaceLng').value=pos.coords.longitude.toFixed(7);
+  $('workplaceStatus').textContent='تم التقاط الإحداثيات. اضغط «حفظ» لحفظ موقع العمل في Supabase.';
+ }catch(e){$('workplaceStatus').textContent='تعذر تحديد الموقع. اسمح للمتصفح بالوصول إلى الموقع.';toast(e.message||'تعذر تحديد الموقع');}
+});
+
 $('saveSettings').onclick=()=>showAdmin(async()=>{
   const company=$('companyName').value.trim()||'نظام الحضور والانصراف';
   const grace=Math.max(0,Math.min(120,Number($('grace').value)||0));
   const {error}=await sb.from('system_settings').upsert({
     id:1,company_name:company,late_allowed_minutes:grace,
-    work_start_time:'08:00',work_end_time:'17:00',updated_at:new Date().toISOString()
+    work_start_time:'08:00',work_end_time:'17:00',workplace_lat:$('workplaceLat').value===''?null:Number($('workplaceLat').value),workplace_lng:$('workplaceLng').value===''?null:Number($('workplaceLng').value),workplace_radius_m:200,updated_at:new Date().toISOString()
   });
   if(error){console.error(error);toast('تعذر حفظ الإعدادات');return}
   await loadCloudAdmin();toast('تم حفظ الإعدادات');renderAll();
@@ -1043,6 +1095,9 @@ async function renderSettings(){
   if(!adminUnlocked)return;
   $('companyName').value=db.company||'نظام الحضور والانصراف';
   $('grace').value=Number(db.grace??10);
+  const {data:site}=await sb.from('system_settings').select('workplace_lat,workplace_lng,workplace_radius_m').eq('id',1).maybeSingle();
+  $('workplaceLat').value=site?.workplace_lat??'';$('workplaceLng').value=site?.workplace_lng??'';
+  $('workplaceStatus').textContent=(site?.workplace_lat!=null&&site?.workplace_lng!=null)?'موقع العمل محفوظ — نطاق السماح 200 متر.':'حدد موقع مقر العمل من داخل المقر.';
 }
 async function renderAll(){
   if(!adminUnlocked){renderHome();return}
